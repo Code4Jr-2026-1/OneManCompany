@@ -1,0 +1,180 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  COACH
+  STUDENT
+  PARENT
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  role          Role      @default(STUDENT)
+  password      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+
+  students       Student[] @relation("CoachStudents")
+  studentProfile Student?  @relation("StudentUser")
+  parentOf       Student[] @relation("ParentStudents")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Student {
+  id         String   @id @default(cuid())
+  name       String
+  age        Int?
+  rating     Int      @default(0)
+  skillLevel String   @default("beginner")
+  goals      String?
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  coachId String
+  coach   User   @relation("CoachStudents", fields: [coachId], references: [id])
+
+  userId String? @unique
+  user   User?   @relation("StudentUser", fields: [userId], references: [id])
+
+  parentId String?
+  parent   User?   @relation("ParentStudents", fields: [parentId], references: [id])
+
+  context       StudentContext?
+  sessions      CoachSession[]
+  gameAnalyses  GameAnalysis[]
+  snapshots     ProgressSnapshot[]
+  plans         ImprovementPlan[]
+  parentReports ParentReport[]
+}
+
+model StudentContext {
+  id             String   @id @default(cuid())
+  studentId      String   @unique
+  contextSummary String   @default("")
+  rawNotesBuffer Json     @default("[]")
+  updatedAt      DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model CoachSession {
+  id         String   @id @default(cuid())
+  studentId  String
+  date       DateTime @default(now())
+  coachNotes String?
+  wellness   Json?
+  aiSummary  String?
+  createdAt  DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model GameAnalysis {
+  id               String   @id @default(cuid())
+  studentId        String
+  pgn              String
+  aiAnalysis       String?
+  patternsDetected Json     @default("[]")
+  createdAt        DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model ProgressSnapshot {
+  id              String   @id @default(cuid())
+  studentId       String
+  month           DateTime
+  rating          Int
+  topicMastery    Json     @default("{}")
+  improvementRate Float    @default(0)
+  sessionCount    Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, month])
+}
+
+model ImprovementPlan {
+  id        String   @id @default(cuid())
+  studentId String
+  topics    Json     @default("[]")
+  milestones Json    @default("[]")
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model ParentReport {
+  id        String    @id @default(cuid())
+  studentId String
+  month     DateTime
+  content   String
+  status    String    @default("DRAFT")
+  sentAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model Message {
+  id         String    @id @default(cuid())
+  fromUserId String
+  toUserId   String
+  body       String
+  readAt     DateTime?
+  createdAt  DateTime  @default(now())
+}
