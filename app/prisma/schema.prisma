@@ -3,13 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-}
-
-enum Role {
-  COACH
-  STUDENT
-  PARENT
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -18,14 +13,13 @@ model User {
   email         String    @unique
   emailVerified DateTime?
   image         String?
-  role          Role      @default(STUDENT)
+  role          String    @default("STUDENT")
   password      String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts Account[]
-  sessions Session[]
-
+  accounts       Account[]
+  sessions       Session[]
   students       Student[] @relation("CoachStudents")
   studentProfile Student?  @relation("StudentUser")
   parentOf       Student[] @relation("ParentStudents")
@@ -44,8 +38,7 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -55,8 +48,7 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
@@ -99,10 +91,9 @@ model StudentContext {
   id             String   @id @default(cuid())
   studentId      String   @unique
   contextSummary String   @default("")
-  rawNotesBuffer Json     @default("[]")
+  rawNotesBuffer String   @default("[]")
   updatedAt      DateTime @updatedAt
-
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student        Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
 model CoachSession {
@@ -110,22 +101,21 @@ model CoachSession {
   studentId  String
   date       DateTime @default(now())
   coachNotes String?
-  wellness   Json?
+  wellness   String?
   aiSummary  String?
   createdAt  DateTime @default(now())
-
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
 model GameAnalysis {
   id               String   @id @default(cuid())
   studentId        String
   pgn              String
+  result           String?
   aiAnalysis       String?
-  patternsDetected Json     @default("[]")
+  patternsDetected String   @default("[]")
   createdAt        DateTime @default(now())
-
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student          Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
 model ProgressSnapshot {
@@ -133,28 +123,26 @@ model ProgressSnapshot {
   studentId       String
   month           DateTime
   rating          Int
-  topicMastery    Json     @default("{}")
+  topicMastery    String   @default("{}")
   improvementRate Float    @default(0)
   sessionCount    Int      @default(0)
   createdAt       DateTime @default(now())
-
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student         Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, month])
 }
 
 model ImprovementPlan {
-  id        String   @id @default(cuid())
-  studentId String
-  topics    Json     @default("[]")
-  milestones Json    @default("[]")
-  startDate DateTime
-  endDate   DateTime
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  studentId  String
+  topics     String   @default("[]")
+  milestones String   @default("[]")
+  startDate  DateTime
+  endDate    DateTime
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
 model ParentReport {
@@ -166,8 +154,7 @@ model ParentReport {
   sentAt    DateTime?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student   Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
 model Message {
