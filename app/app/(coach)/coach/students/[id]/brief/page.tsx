@@ -102,8 +102,14 @@ export default async function PreSessionBrief({ params }: { params: Promise<{ id
           {/* Weak areas */}
           <div className="bg-white rounded-xl border p-5">
             <h2 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <span className="text-red-500">🎯</span> Weakest Area
+              <span className="text-red-500">🎯</span> Weaknesses
             </h2>
+            {student.weakness && (
+              <div className="mb-3 p-3 bg-red-50 rounded-lg border border-red-100">
+                <p className="text-xs text-red-400 font-medium mb-0.5">Coach-noted</p>
+                <p className="text-sm text-red-700">{student.weakness}</p>
+              </div>
+            )}
             {weakestTopic ? (
               <div className="space-y-3">
                 <div className="p-3 bg-red-50 rounded-lg border border-red-100">

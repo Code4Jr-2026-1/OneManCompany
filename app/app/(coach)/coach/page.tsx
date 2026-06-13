@@ -28,9 +28,22 @@ export default async function CoachHome() {
     orderBy: { updatedAt: "desc" },
   })
 
+  const groupClasses = await prisma.groupClass.findMany({
+    where: { coachId: coach.id, isActive: true },
+    include: { enrollments: { where: { status: "ACTIVE" }, select: { id: true } } },
+  })
+
+  const todayDow = now.getDay()
+  const todayGroupClasses = groupClasses.filter(gc => gc.dayOfWeek === todayDow)
+
   const todaySessions = students
     .map(s => s.scheduledSessions.find(ss => new Date(ss.scheduledAt) >= todayStart && new Date(ss.scheduledAt) <= todayEnd))
     .filter(Boolean)
+
+  const upcomingPrivate = students
+    .flatMap(s => s.scheduledSessions.map(ss => ({ ...ss, student: s })))
+    .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
+    .slice(0, 3)
 
   const upcomingSessions = students
     .flatMap(s => s.scheduledSessions.map(ss => ({ ...ss, student: s })))
@@ -84,22 +97,40 @@ export default async function CoachHome() {
                 <h2 className="font-semibold text-gray-900">Today&apos;s Sessions</h2>
                 <Link href="/coach/schedule" className="text-sm text-blue-600 hover:underline">View calendar →</Link>
               </div>
-              {todaySessions.length === 0 ? (
+              {todaySessions.length === 0 && todayGroupClasses.length === 0 ? (
                 <div className="px-6 py-8 text-center text-gray-400 text-sm">
                   No sessions scheduled today.
-                  <Link href="/coach/schedule" className="text-blue-600 hover:underline ml-1">Schedule one →</Link>
+                  <Link href="/coach/personal-classes" className="text-blue-600 hover:underline ml-1">Book one →</Link>
                 </div>
               ) : (
                 <div className="divide-y">
+                  {todayGroupClasses.map(gc => (
+                    <div key={gc.id} className="px-6 py-4 flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center text-teal-700 font-bold text-sm flex-shrink-0">👥</div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-gray-900">{gc.name}</p>
+                          <span className="text-xs bg-teal-100 text-teal-700 px-1.5 py-0.5 rounded-full">Group</span>
+                        </div>
+                        <p className="text-sm text-gray-500">{gc.startTime} · {gc.duration} min · {gc.enrollments.length} students</p>
+                      </div>
+                      <Link href={`/coach/group-classes/${gc.id}`}>
+                        <button className="text-sm bg-teal-600 text-white px-3 py-1.5 rounded-lg hover:bg-teal-700">View →</button>
+                      </Link>
+                    </div>
+                  ))}
                   {todaySessions.map((ss, i) => {
                     const student = students.find(s => s.scheduledSessions.some(x => x.id === ss!.id))!
                     return (
                       <div key={i} className="px-6 py-4 flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm">
+                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm flex-shrink-0">
                           {student.name.split(" ").map(n => n[0]).join("").slice(0,2)}
                         </div>
                         <div className="flex-1">
-                          <p className="font-medium text-gray-900">{student.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-gray-900">{student.name}</p>
+                            <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">Private</span>
+                          </div>
                           <p className="text-sm text-gray-500">{fmtTime(new Date(ss!.scheduledAt))} · {ss!.duration} min · {student.skillLevel}</p>
                         </div>
                         <div className="flex gap-2">
@@ -116,6 +147,30 @@ export default async function CoachHome() {
                 </div>
               )}
             </div>
+
+            {/* Next 3 private sessions widget */}
+            {upcomingPrivate.length > 0 && (
+              <div className="bg-white rounded-xl border">
+                <div className="px-6 py-4 border-b flex items-center justify-between">
+                  <h2 className="font-semibold text-gray-900">Next Private Sessions</h2>
+                  <Link href="/coach/personal-classes" className="text-sm text-blue-600 hover:underline">All →</Link>
+                </div>
+                <div className="divide-y">
+                  {upcomingPrivate.map(ss => (
+                    <div key={ss.id} className="px-6 py-3 flex items-center gap-3">
+                      <div className="w-20 text-xs text-gray-400 flex-shrink-0">
+                        <div>{fmt(new Date(ss.scheduledAt))}</div>
+                        <div className="font-medium text-gray-600">{fmtTime(new Date(ss.scheduledAt))}</div>
+                      </div>
+                      <div className="flex-1 text-sm font-medium text-gray-900">{ss.student.name}</div>
+                      <Link href={`/coach/students/${ss.student.id}/brief`}>
+                        <button className="text-xs text-blue-600 hover:underline">Brief →</button>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Upcoming this week */}
             <div className="bg-white rounded-xl border">

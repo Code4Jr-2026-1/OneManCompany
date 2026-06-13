@@ -3,15 +3,20 @@ import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { CoachNav } from "@/components/coach-nav"
+import { StudentSearch } from "./search"
 
-export default async function StudentsPage() {
+export default async function StudentsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  const { q } = await searchParams
   const session = await auth()
   if (!session || (session.user as { role?: string }).role !== "COACH") redirect("/login")
   const coach = await prisma.user.findUnique({ where: { email: session.user!.email! } })
   if (!coach) redirect("/login")
 
   const students = await prisma.student.findMany({
-    where: { coachId: coach.id },
+    where: {
+      coachId: coach.id,
+      ...(q ? { name: { contains: q } } : {}),
+    },
     include: {
       coachSessions: { orderBy: { date: "desc" }, take: 1 },
       homeworkAssignments: { where: { status: "PENDING" }, take: 1 },
@@ -31,8 +36,9 @@ export default async function StudentsPage() {
 
   function trend(s: typeof students[0]) {
     const [cur, prev] = s.snapshots
-    if (!cur || !prev) return "new"
-    return cur.rating > prev.rating ? "up" : cur.rating < prev.rating ? "down" : "flat"
+    if (!cur || !prev) return { dir: "new", delta: 0 }
+    const delta = cur.rating - prev.rating
+    return { dir: delta > 0 ? "up" : delta < 0 ? "down" : "flat", delta }
   }
 
   return (
@@ -42,9 +48,12 @@ export default async function StudentsPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">My Students</h1>
-            <p className="text-gray-500 text-sm mt-1">{students.length} students enrolled</p>
+            <p className="text-gray-500 text-sm mt-1">
+              {students.length} student{students.length !== 1 ? "s" : ""}{q ? ` matching "${q}"` : " enrolled"}
+            </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex items-center gap-3">
+            <StudentSearch defaultValue={q ?? ""} />
             <Link href="/coach/compare">
               <button className="border px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 text-gray-700">⚖ Compare</button>
             </Link>
@@ -52,6 +61,15 @@ export default async function StudentsPage() {
               <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">+ Add Student</button>
             </Link>
           </div>
+        </div>
+
+        {/* Legend */}
+        <div className="flex items-center gap-4 mb-3 text-xs text-gray-400">
+          <span className="font-medium text-gray-500">Trend (vs last month):</span>
+          <span className="flex items-center gap-1"><span className="text-green-600 font-bold">↑</span> Rating improved</span>
+          <span className="flex items-center gap-1"><span className="text-red-500 font-bold">↓</span> Rating dropped</span>
+          <span className="flex items-center gap-1"><span className="text-yellow-500 font-bold">→</span> No change</span>
+          <span className="flex items-center gap-1"><span className="text-gray-400 font-bold">✦</span> New / no data yet</span>
         </div>
 
         <div className="bg-white rounded-xl border">
@@ -66,10 +84,10 @@ export default async function StudentsPage() {
           </div>
           {students.length === 0 ? (
             <div className="px-6 py-12 text-center text-gray-400">
-              No students yet. <Link href="/coach/students/new" className="text-blue-600 hover:underline">Add your first student →</Link>
+              {q ? <>No students match &quot;{q}&quot;.</> : <>No students yet. <Link href="/coach/students/new" className="text-blue-600 hover:underline">Add your first student →</Link></>}
             </div>
           ) : students.map(s => {
-            const t = trend(s)
+            const { dir: t, delta } = trend(s)
             const days = daysInactive(s)
             const hw = s.homeworkAssignments[0]
             const next = s.scheduledSessions[0]
@@ -86,8 +104,20 @@ export default async function StudentsPage() {
                 <div className="col-span-1 text-center">
                   <span className="font-semibold text-gray-900">{s.rating}</span>
                 </div>
-                <div className="col-span-1 text-center text-lg">
-                  {t === "up" ? <span className="text-green-600">↑</span> : t === "down" ? <span className="text-red-500">↓</span> : <span className="text-yellow-500">→</span>}
+                <div className="col-span-1 text-center">
+                  {t === "new" ? (
+                    <span className="text-gray-400 text-sm" title="No monthly snapshots yet — trend will appear after first progress snapshot">✦ New</span>
+                  ) : t === "up" ? (
+                    <span className="text-green-600 font-semibold" title={`Rating improved by ${delta} points vs last month`}>
+                      ↑ <span className="text-xs">+{delta}</span>
+                    </span>
+                  ) : t === "down" ? (
+                    <span className="text-red-500 font-semibold" title={`Rating dropped by ${Math.abs(delta)} points vs last month`}>
+                      ↓ <span className="text-xs">{delta}</span>
+                    </span>
+                  ) : (
+                    <span className="text-yellow-500 font-semibold" title="Rating unchanged vs last month">→ <span className="text-xs text-gray-400">±0</span></span>
+                  )}
                 </div>
                 <div className="col-span-2 text-center">
                   <span className={`text-xs px-2 py-1 rounded-full font-medium ${!hw ? "bg-gray-100 text-gray-500" : "bg-orange-100 text-orange-700"}`}>

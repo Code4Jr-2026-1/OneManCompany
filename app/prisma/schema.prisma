@@ -19,12 +19,13 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts       Account[]
-  sessions       Session[]
-  students       Student[] @relation("CoachStudents")
-  studentProfile Student?  @relation("StudentUser")
-  parentOf       Student[] @relation("ParentStudents")
+  accounts        Account[]
+  sessions        Session[]
+  students        Student[]       @relation("CoachStudents")
+  studentProfile  Student?        @relation("StudentUser")
+  parentOf        Student[]       @relation("ParentStudents")
   lessonTemplates LessonTemplate[]
+  groupClasses    GroupClass[]
 }
 
 model Account {
@@ -72,6 +73,8 @@ model Student {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  weakness   String?
+
   coachId String
   coach   User   @relation("CoachStudents", fields: [coachId], references: [id])
 
@@ -81,15 +84,16 @@ model Student {
   parentId String?
   parent   User?   @relation("ParentStudents", fields: [parentId], references: [id])
 
-  context           StudentContext?
-  coachSessions     CoachSession[]
-  gameAnalyses      GameAnalysis[]
-  snapshots         ProgressSnapshot[]
-  plans             ImprovementPlan[]
-  parentReports     ParentReport[]
+  context             StudentContext?
+  coachSessions       CoachSession[]
+  gameAnalyses        GameAnalysis[]
+  snapshots           ProgressSnapshot[]
+  plans               ImprovementPlan[]
+  parentReports       ParentReport[]
   homeworkAssignments Homework[]
-  scheduledSessions ScheduledSession[]
-  billingEntries    BillingEntry[]
+  scheduledSessions   ScheduledSession[]
+  billingEntries      BillingEntry[]
+  groupEnrollments    GroupEnrollment[]
 }
 
 model StudentContext {
@@ -109,7 +113,9 @@ model CoachSession {
   topicsCovered   String?
   coachNotes      String?
   wellness        String?
+  transcript      String?
   aiSummary       String?
+  aiAnalysis      String?
   homeworkSet     String?
   nextSessionDate DateTime?
   lessonTemplateId String?
@@ -129,17 +135,19 @@ model ScheduledSession {
 }
 
 model Homework {
-  id          String    @id @default(cuid())
-  studentId   String
-  title       String
-  description String?
-  resourceUrl String?
-  dueDate     DateTime?
-  status      String    @default("PENDING")
-  completedAt DateTime?
-  studentNote String?
-  createdAt   DateTime  @default(now())
-  student     Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  id           String     @id @default(cuid())
+  studentId    String
+  groupClassId String?
+  title        String
+  description  String?
+  resourceUrl  String?
+  dueDate      DateTime?
+  status       String     @default("PENDING")
+  completedAt  DateTime?
+  studentNote  String?
+  createdAt    DateTime   @default(now())
+  student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  groupClass   GroupClass? @relation(fields: [groupClassId], references: [id], onDelete: SetNull)
 }
 
 model LessonTemplate {
@@ -206,19 +214,19 @@ model ParentReport {
 }
 
 model BillingEntry {
-  id        String   @id @default(cuid())
-  studentId String
-  month     DateTime
-  sessions  Int      @default(0)
-  hours     Float    @default(0)
-  rateUsed  Float    @default(0)
-  amount    Float    @default(0)
-  paid      Boolean  @default(false)
-  paidAt    DateTime?
-  createdAt DateTime @default(now())
-  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-
-  @@unique([studentId, month])
+  id           String      @id @default(cuid())
+  studentId    String
+  groupClassId String?
+  month        DateTime
+  sessions     Int         @default(0)
+  hours        Float       @default(0)
+  rateUsed     Float       @default(0)
+  amount       Float       @default(0)
+  paid         Boolean     @default(false)
+  paidAt       DateTime?
+  createdAt    DateTime    @default(now())
+  student      Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  groupClass   GroupClass? @relation(fields: [groupClassId], references: [id], onDelete: SetNull)
 }
 
 model Message {
@@ -228,4 +236,52 @@ model Message {
   body       String
   readAt     DateTime?
   createdAt  DateTime  @default(now())
+}
+
+model GroupClass {
+  id          String   @id @default(cuid())
+  coachId     String
+  name        String
+  description String?
+  skillLevel  String   @default("all")
+  capacity    Int      @default(10)
+  dayOfWeek   Int
+  startTime   String
+  duration    Int      @default(60)
+  groupRate   Float    @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  coach       User               @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  enrollments GroupEnrollment[]
+  sessions    GroupSession[]
+  homework    Homework[]
+  billingEntries BillingEntry[]
+}
+
+model GroupEnrollment {
+  id           String     @id @default(cuid())
+  groupClassId String
+  studentId    String
+  status       String     @default("ACTIVE")
+  enrolledAt   DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  groupClass   GroupClass @relation(fields: [groupClassId], references: [id], onDelete: Cascade)
+  student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([groupClassId, studentId])
+}
+
+model GroupSession {
+  id            String     @id @default(cuid())
+  groupClassId  String
+  date          DateTime
+  topicsCovered String?
+  coachNotes    String?
+  aiSummary     String?
+  createdAt     DateTime   @default(now())
+
+  groupClass    GroupClass @relation(fields: [groupClassId], references: [id], onDelete: Cascade)
 }

@@ -1,32 +1,74 @@
-import Anthropic from "@anthropic-ai/sdk"
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
-
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+import { openai, MODEL } from "@/lib/openai"
 
 export async function POST(req: Request) {
-  const { studentId, studentName, topicsCovered, wellness, homeworkTasks, nextSessionDate, duration } = await req.json()
+  const { studentId, studentName, topicsCovered, wellness, homeworkTasks, nextSessionDate, duration, transcript } = await req.json()
 
-  // Generate AI summary
+  // Build AI analysis from transcript + session data
   let aiSummary = `Session covered: ${topicsCovered}. Student energy: ${wellness}.`
-  if (process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY !== "sk-ant-...") {
-    try {
-      const res = await client.messages.create({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 300,
-        messages: [{
-          role: "user",
-          content: `Write a brief (3-4 sentence) coaching session summary for ${studentName}:
+  let aiAnalysis: string | null = null
+
+  try {
+    const hasTranscript = transcript && transcript.trim().length > 20
+
+    const prompt = hasTranscript
+      ? `You are an expert chess coach assistant. Analyse this coaching session and return a JSON object.
+
+Student: ${studentName}
 Topics covered: ${topicsCovered}
 Student energy/wellness: ${wellness}
-Homework assigned: ${homeworkTasks.join(", ") || "None"}
-Next session: ${nextSessionDate}
+Duration: ${duration} minutes
+Homework assigned: ${homeworkTasks?.join(", ") || "None"}
 
-Keep it professional, note any observations or suggestions for next session.`
-        }],
-      })
-      if (res.content[0].type === "text") aiSummary = res.content[0].text
-    } catch { /* use fallback */ }
+Session transcript / notes:
+"""
+${transcript}
+"""
+
+Return ONLY valid JSON in this exact format:
+{
+  "summary": "2-3 sentence overview of the session",
+  "keyMoments": ["moment 1", "moment 2", "moment 3"],
+  "studentPerformance": "1-2 sentences on how the student performed",
+  "weaknessObserved": "Any weakness or pattern spotted this session",
+  "nextSessionFocus": "What the coach should focus on next session",
+  "homeworkRationale": "Why this homework was assigned and what it targets"
+}`
+      : `You are an expert chess coach assistant. Summarise this coaching session and return a JSON object.
+
+Student: ${studentName}
+Topics covered: ${topicsCovered}
+Student energy/wellness: ${wellness}
+Duration: ${duration} minutes
+Homework assigned: ${homeworkTasks?.join(", ") || "None"}
+
+Return ONLY valid JSON in this exact format:
+{
+  "summary": "2-3 sentence overview of the session",
+  "keyMoments": [],
+  "studentPerformance": "Brief note on the session",
+  "weaknessObserved": "Unable to assess without transcript",
+  "nextSessionFocus": "Continue working on ${topicsCovered}",
+  "homeworkRationale": "Reinforces topics covered this session"
+}`
+
+    const res = await openai.chat.completions.create({
+      model: MODEL,
+      max_tokens: 600,
+      temperature: 0.4,
+      messages: [{ role: "user", content: prompt }],
+    })
+
+    const raw = res.choices[0].message.content ?? ""
+    const jsonMatch = raw.match(/\{[\s\S]*\}/)
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0])
+      aiSummary = parsed.summary ?? aiSummary
+      aiAnalysis = JSON.stringify(parsed)
+    }
+  } catch {
+    // keep fallback
   }
 
   // Save session
@@ -36,15 +78,17 @@ Keep it professional, note any observations or suggestions for next session.`
       duration: duration || 60,
       topicsCovered,
       wellness,
-      coachNotes: topicsCovered,
+      coachNotes: null,
+      transcript: transcript || null,
       aiSummary,
-      homeworkSet: homeworkTasks.length ? homeworkTasks.join("; ") : null,
+      aiAnalysis,
+      homeworkSet: homeworkTasks?.length ? homeworkTasks.join("; ") : null,
       nextSessionDate: nextSessionDate ? new Date(nextSessionDate) : null,
     },
   })
 
   // Save homework entries
-  for (const task of homeworkTasks) {
+  for (const task of (homeworkTasks ?? [])) {
     if (!task) continue
     await prisma.homework.create({
       data: {
@@ -68,8 +112,7 @@ Keep it professional, note any observations or suggestions for next session.`
     })
   }
 
-  // Update student updatedAt
   await prisma.student.update({ where: { id: studentId }, data: { updatedAt: new Date() } })
 
-  return NextResponse.json({ ok: true, aiSummary })
+  return NextResponse.json({ ok: true, aiSummary, aiAnalysis })
 }

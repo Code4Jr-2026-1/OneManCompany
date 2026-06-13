@@ -4,12 +4,14 @@ import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
 
 const tabs = [
-  { label: "Today",    href: "/coach",           icon: "🏠" },
-  { label: "Students", href: "/coach/students",   icon: "👥" },
-  { label: "Schedule", href: "/coach/schedule",   icon: "📅" },
-  { label: "Homework", href: "/coach/homework",   icon: "📝" },
-  { label: "Reports",  href: "/coach/reports",    icon: "📊" },
-  { label: "Billing",  href: "/coach/billing",    icon: "💰" },
+  { label: "Today",    href: "/coach",                    icon: "🏠" },
+  { label: "Students", href: "/coach/students",           icon: "👥" },
+  { label: "Personal", href: "/coach/personal-classes",   icon: "🎯" },
+  { label: "Group",    href: "/coach/group-classes",      icon: "👥" },
+  { label: "Schedule", href: "/coach/schedule",           icon: "📅" },
+  { label: "Homework", href: "/coach/homework",           icon: "📝" },
+  { label: "Reports",  href: "/coach/reports",            icon: "📊" },
+  { label: "Billing",  href: "/coach/billing",            icon: "💰" },
 ]
 
 export function CoachNav({ coachName }: { coachName: string }) {

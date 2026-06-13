@@ -24,7 +24,14 @@ export default async function SchedulePage() {
     },
   })
 
-  const events = students.flatMap(s =>
+  const groupClasses = await prisma.groupClass.findMany({
+    where: { coachId: coach.id, isActive: true },
+    include: {
+      enrollments: { where: { status: "ACTIVE" }, select: { id: true } },
+    },
+  })
+
+  const privateEvents = students.flatMap(s =>
     s.scheduledSessions.map(ss => ({
       id: ss.id,
       studentId: s.id,
@@ -32,8 +39,20 @@ export default async function SchedulePage() {
       scheduledAt: ss.scheduledAt.toISOString(),
       duration: ss.duration,
       status: ss.status,
+      type: "private" as const,
     }))
   )
+
+  const groupEvents = groupClasses.map(gc => ({
+    id: gc.id,
+    name: gc.name,
+    dayOfWeek: gc.dayOfWeek,
+    startTime: gc.startTime,
+    duration: gc.duration,
+    enrolledCount: gc.enrollments.length,
+    capacity: gc.capacity,
+    type: "group" as const,
+  }))
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -42,11 +61,11 @@ export default async function SchedulePage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Session Schedule</h1>
-            <p className="text-gray-500 text-sm mt-1">{events.length} sessions scheduled</p>
+            <p className="text-gray-500 text-sm mt-1">{privateEvents.length} private sessions · {groupClasses.length} group class{groupClasses.length !== 1 ? "es" : ""}</p>
           </div>
           <AddSessionButton students={students.map(s => ({ id: s.id, name: s.name }))} />
         </div>
-        <WeekCalendar events={events} />
+        <WeekCalendar privateEvents={privateEvents} groupEvents={groupEvents} />
       </div>
     </div>
   )

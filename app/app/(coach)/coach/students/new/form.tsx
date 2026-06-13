@@ -20,6 +20,7 @@ export function AddStudentForm({ coachId }: { coachId: string }) {
         rating: Number(fd.get("rating") || 0),
         skillLevel: fd.get("skillLevel"),
         goals: fd.get("goals"),
+        weakness: fd.get("weakness"),
         notes: fd.get("notes"),
       }),
     })
@@ -50,11 +51,20 @@ export function AddStudentForm({ coachId }: { coachId: string }) {
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Goals</label>
-        <textarea name="goals" rows={3} placeholder="What does this student want to achieve?" className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <textarea name="goals" rows={2} placeholder="What does this student want to achieve?"
+          className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Known Weaknesses <span className="text-gray-400 font-normal">(areas to focus on)</span>
+        </label>
+        <textarea name="weakness" rows={2} placeholder="e.g. Endgame technique, time management, blundering pieces under pressure"
+          className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Coach Notes</label>
-        <textarea name="notes" rows={2} placeholder="Initial observations..." className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <textarea name="notes" rows={2} placeholder="Initial observations..."
+          className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
       </div>
       <div className="flex gap-3">
         <button type="submit" disabled={loading} className="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">

@@ -56,6 +56,7 @@ export default async function StudentDetail({ params }: { params: Promise<{ id: 
               <div className="flex justify-between"><span className="text-gray-500">Age</span><span className="font-semibold">{student.age ?? "—"}</span></div>
             </div>
             {student.goals && <div className="mt-4 p-3 bg-blue-50 rounded-lg"><p className="text-xs text-gray-500 mb-1">Goals</p><p className="text-sm text-gray-700">{student.goals}</p></div>}
+            {student.weakness && <div className="mt-2 p-3 bg-red-50 rounded-lg"><p className="text-xs text-red-400 mb-1">Known Weaknesses</p><p className="text-sm text-red-700">{student.weakness}</p></div>}
           </div>
 
           {student.context && (
@@ -136,15 +137,24 @@ export default async function StudentDetail({ params }: { params: Promise<{ id: 
               <p className="text-sm text-gray-400">No sessions recorded yet.</p>
             ) : (
               <div className="space-y-3">
-                {student.coachSessions.map(s => (
-                  <div key={s.id} className="border-l-2 border-blue-200 pl-3">
-                    <p className="text-xs text-gray-400">{new Date(s.date).toLocaleDateString()}</p>
-                    {s.topicsCovered && <p className="text-sm font-medium text-gray-800">{s.topicsCovered}</p>}
-                    {s.coachNotes && <p className="text-sm text-gray-700 mt-0.5">{s.coachNotes}</p>}
-                    {s.aiSummary && <p className="text-xs text-blue-600 mt-1">✦ {s.aiSummary}</p>}
-                    {s.homeworkSet && <p className="text-xs text-orange-600 mt-1">HW: {s.homeworkSet}</p>}
-                  </div>
-                ))}
+                {student.coachSessions.map(s => {
+                  let analysis: Record<string, unknown> | null = null
+                  try { if (s.aiAnalysis) analysis = JSON.parse(s.aiAnalysis) } catch { /* ignore */ }
+                  return (
+                    <div key={s.id} className="border-l-2 border-blue-200 pl-3">
+                      <p className="text-xs text-gray-400">{new Date(s.date).toLocaleDateString()} · {s.duration} min · {s.wellness}</p>
+                      {s.topicsCovered && <p className="text-sm font-medium text-gray-800">{s.topicsCovered}</p>}
+                      {s.aiSummary && <p className="text-xs text-purple-600 mt-1">✦ {s.aiSummary}</p>}
+                      {analysis && (analysis.weaknessObserved as string) && !(analysis.weaknessObserved as string).toLowerCase().includes("unable") && (
+                        <p className="text-xs text-red-500 mt-0.5">⚠ {analysis.weaknessObserved as string}</p>
+                      )}
+                      {analysis && (analysis.nextSessionFocus as string) && (
+                        <p className="text-xs text-green-600 mt-0.5">→ Next: {analysis.nextSessionFocus as string}</p>
+                      )}
+                      {s.homeworkSet && <p className="text-xs text-orange-600 mt-0.5">HW: {s.homeworkSet}</p>}
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>

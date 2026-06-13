@@ -10,6 +10,7 @@ export async function POST(req: Request) {
       rating: body.rating ?? 0,
       skillLevel: body.skillLevel ?? "beginner",
       goals: body.goals,
+      weakness: body.weakness || null,
       notes: body.notes,
       coachId: body.coachId,
     },
@@ -17,7 +18,7 @@ export async function POST(req: Request) {
   await prisma.studentContext.create({
     data: {
       studentId: student.id,
-      contextSummary: `${student.name} is a ${student.skillLevel} player. Goals: ${student.goals ?? "Not set"}.`,
+      contextSummary: `${student.name} is a ${student.skillLevel} player. Goals: ${student.goals ?? "Not set"}. Known weaknesses: ${student.weakness ?? "Not recorded"}.`,
     },
   })
   return NextResponse.json(student)
