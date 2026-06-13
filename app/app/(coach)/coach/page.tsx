@@ -3,136 +3,200 @@ import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { SignOutButton } from "@/components/sign-out-button"
+import { CoachNav } from "@/components/coach-nav"
 
-export default async function CoachDashboard() {
+export default async function CoachHome() {
   const session = await auth()
   if (!session || (session.user as { role?: string }).role !== "COACH") redirect("/login")
 
   const coach = await prisma.user.findUnique({ where: { email: session.user!.email! } })
   if (!coach) redirect("/login")
 
+  const now = new Date()
+  const todayStart = new Date(now); todayStart.setHours(0, 0, 0, 0)
+  const todayEnd   = new Date(now); todayEnd.setHours(23, 59, 59, 999)
+  const weekEnd    = new Date(now.getTime() + 7 * 86400000)
+
   const students = await prisma.student.findMany({
     where: { coachId: coach.id },
-    include: { snapshots: { orderBy: { month: "desc" }, take: 2 }, sessions: { orderBy: { date: "desc" }, take: 1 } },
+    include: {
+      coachSessions: { orderBy: { date: "desc" }, take: 1 },
+      scheduledSessions: { where: { scheduledAt: { gte: now, lte: weekEnd } }, orderBy: { scheduledAt: "asc" }, take: 1 },
+      homeworkAssignments: { where: { status: "PENDING" }, orderBy: { dueDate: "asc" }, take: 1 },
+      snapshots: { orderBy: { month: "desc" }, take: 2 },
+    },
     orderBy: { updatedAt: "desc" },
   })
 
-  const totalStudents = students.length
-  const avgRating = students.length ? Math.round(students.reduce((a, s) => a + s.rating, 0) / students.length) : 0
-  const improving = students.filter(s => {
-    const [cur, prev] = s.snapshots
-    return cur && prev && cur.improvementRate > prev.improvementRate
-  }).length
+  const todaySessions = students
+    .map(s => s.scheduledSessions.find(ss => new Date(ss.scheduledAt) >= todayStart && new Date(ss.scheduledAt) <= todayEnd))
+    .filter(Boolean)
 
-  function trend(s: typeof students[0]) {
-    const [cur, prev] = s.snapshots
-    if (!cur || !prev) return "new"
-    return cur.rating > prev.rating ? "up" : cur.rating < prev.rating ? "down" : "plateau"
-  }
+  const upcomingSessions = students
+    .flatMap(s => s.scheduledSessions.map(ss => ({ ...ss, student: s })))
+    .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
+    .slice(0, 5)
 
-  function lastActive(s: typeof students[0]) {
-    const last = s.sessions[0]
-    if (!last) return "No sessions yet"
-    const diff = Math.floor((Date.now() - last.date.getTime()) / 86400000)
-    if (diff === 0) return "Today"
-    if (diff === 1) return "Yesterday"
-    return `${diff} days ago`
-  }
+  const needsAttention = students.filter(s => {
+    const lastSession = s.coachSessions[0]
+    if (!lastSession) return true
+    const daysSince = Math.floor((now.getTime() - new Date(lastSession.date).getTime()) / 86400000)
+    return daysSince >= 7
+  })
+
+  const totalPendingHomework = students.reduce((a, s) => a + s.homeworkAssignments.length, 0)
+
+  const fmt = (d: Date) => new Date(d).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })
+  const fmtTime = (d: Date) => new Date(d).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white text-sm font-bold">♟</div>
-          <span className="font-semibold text-gray-900">Chess Coach Portal</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <Link href="/coach/students/new" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">+ Add Student</Link>
-          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-semibold text-xs">
-            {coach.name?.split(" ").map(n => n[0]).join("") ?? "C"}
-          </div>
-          <SignOutButton />
-        </div>
-      </nav>
+      <CoachNav coachName={coach.name ?? "Coach"} />
 
       <div className="max-w-6xl mx-auto px-6 py-8">
+        {/* Greeting */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Good morning, {coach.name?.split(" ")[0]} 👋</h1>
-          <p className="text-gray-500 text-sm mt-1">{totalStudents} active students · {improving} improving this month</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {now.getHours() < 12 ? "Good morning" : now.getHours() < 17 ? "Good afternoon" : "Good evening"}, {coach.name?.split(" ")[0]} ♟
+          </h1>
+          <p className="text-gray-500 text-sm mt-1">
+            {fmt(now)} · {students.length} students · {totalPendingHomework} homework pending
+          </p>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-4 mb-8">
-          {[
-            { label: "Total Students", value: totalStudents, sub: "All active", color: "blue" },
-            { label: "Avg Rating", value: avgRating, sub: "Across all students", color: "green" },
-            { label: "Improving", value: `${totalStudents ? Math.round(improving / totalStudents * 100) : 0}%`, sub: `${improving} of ${totalStudents}`, color: "purple" },
-            { label: "Sessions This Month", value: students.reduce((a, s) => a + (s.snapshots[0]?.sessionCount ?? 0), 0), sub: "Total sessions", color: "orange" },
-          ].map((stat) => (
-            <div key={stat.label} className="bg-white rounded-xl border p-5">
-              <p className="text-xs text-gray-500 mb-1">{stat.label}</p>
-              <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
-              <p className="text-xs text-gray-400 mt-1">{stat.sub}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Student list */}
-        <div className="bg-white rounded-xl border">
-          <div className="px-6 py-4 border-b">
-            <h2 className="font-semibold text-gray-900">Student Roster</h2>
+        {/* Alert strip */}
+        {needsAttention.length > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-3 mb-6 flex items-center gap-3">
+            <span className="text-amber-600 text-lg">⚠</span>
+            <p className="text-sm text-amber-800">
+              <span className="font-semibold">{needsAttention.map(s => s.name.split(" ")[0]).join(", ")}</span> — no session in 7+ days. Consider scheduling a catch-up.
+            </p>
           </div>
-          {students.length === 0 ? (
-            <div className="px-6 py-12 text-center text-gray-400">
-              No students yet. <Link href="/coach/students/new" className="text-blue-600 hover:underline">Add your first student →</Link>
+        )}
+
+        <div className="grid grid-cols-3 gap-6">
+          {/* LEFT: Today + Upcoming */}
+          <div className="col-span-2 space-y-6">
+
+            {/* Today's sessions */}
+            <div className="bg-white rounded-xl border">
+              <div className="px-6 py-4 border-b flex items-center justify-between">
+                <h2 className="font-semibold text-gray-900">Today&apos;s Sessions</h2>
+                <Link href="/coach/schedule" className="text-sm text-blue-600 hover:underline">View calendar →</Link>
+              </div>
+              {todaySessions.length === 0 ? (
+                <div className="px-6 py-8 text-center text-gray-400 text-sm">
+                  No sessions scheduled today.
+                  <Link href="/coach/schedule" className="text-blue-600 hover:underline ml-1">Schedule one →</Link>
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {todaySessions.map((ss, i) => {
+                    const student = students.find(s => s.scheduledSessions.some(x => x.id === ss!.id))!
+                    return (
+                      <div key={i} className="px-6 py-4 flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm">
+                          {student.name.split(" ").map(n => n[0]).join("").slice(0,2)}
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">{student.name}</p>
+                          <p className="text-sm text-gray-500">{fmtTime(new Date(ss!.scheduledAt))} · {ss!.duration} min · {student.skillLevel}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Link href={`/coach/students/${student.id}/brief`}>
+                            <button className="text-sm bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700">📋 Brief</button>
+                          </Link>
+                          <Link href={`/coach/students/${student.id}/end-session`}>
+                            <button className="text-sm bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700">✓ End</button>
+                          </Link>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="divide-y">
-              {students.map((s) => {
-                const t = trend(s)
-                const initials = s.name.split(" ").map(n => n[0]).join("").slice(0, 2)
-                const inactive = s.sessions[0] ? Math.floor((Date.now() - s.sessions[0].date.getTime()) / 86400000) >= 5 : true
-                return (
-                  <div key={s.id} className="px-6 py-4 flex items-center gap-4 hover:bg-gray-50">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-semibold text-sm flex-shrink-0">
-                      {initials}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-gray-900">{s.name}</p>
-                        {inactive && <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">Needs attention</span>}
+
+            {/* Upcoming this week */}
+            <div className="bg-white rounded-xl border">
+              <div className="px-6 py-4 border-b">
+                <h2 className="font-semibold text-gray-900">Upcoming Sessions (7 days)</h2>
+              </div>
+              {upcomingSessions.length === 0 ? (
+                <div className="px-6 py-6 text-sm text-gray-400 text-center">No sessions scheduled this week.</div>
+              ) : (
+                <div className="divide-y">
+                  {upcomingSessions.map((ss) => {
+                    const hwPending = ss.student.homeworkAssignments.length > 0
+                    return (
+                      <div key={ss.id} className="px-6 py-3 flex items-center gap-4">
+                        <div className="w-24 text-xs text-gray-500 font-medium">{fmt(new Date(ss.scheduledAt))}</div>
+                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 text-xs font-bold">
+                          {ss.student.name.split(" ").map(n => n[0]).join("").slice(0,2)}
+                        </div>
+                        <div className="flex-1 text-sm font-medium text-gray-900">{ss.student.name}</div>
+                        {hwPending && <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">HW pending</span>}
+                        <div className="flex gap-2">
+                          <Link href={`/coach/students/${ss.student.id}/brief`}>
+                            <button className="text-xs text-blue-600 hover:underline">Brief</button>
+                          </Link>
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-500 capitalize">{s.skillLevel} · {lastActive(s)}</p>
-                    </div>
-                    <div className="text-center w-20">
-                      <p className="font-semibold text-gray-900">{s.rating}</p>
-                      <p className="text-xs text-gray-400">Rating</p>
-                    </div>
-                    <div className={`text-lg font-bold w-8 text-center ${t === "up" ? "text-green-600" : t === "down" ? "text-red-500" : "text-yellow-500"}`}>
-                      {t === "up" ? "↑" : t === "down" ? "↓" : "→"}
-                    </div>
-                    <div className="w-32">
-                      <div className="flex justify-between text-xs text-gray-500 mb-1">
-                        <span>Progress</span>
-                        <span>{Math.round(s.snapshots[0]?.improvementRate ?? 0)}%</span>
-                      </div>
-                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min(s.snapshots[0]?.improvementRate ?? 0, 100)}%` }} />
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Link href={`/coach/students/${s.id}`}>
-                        <button className="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg text-gray-700">View</button>
-                      </Link>
-                      <Link href={`/coach/students/${s.id}/session`}>
-                        <button className="text-sm bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg text-blue-700">+ Note</button>
-                      </Link>
-                    </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* RIGHT: Stats + Homework */}
+          <div className="space-y-4">
+            {/* Quick stats */}
+            <div className="bg-white rounded-xl border p-5">
+              <h3 className="font-semibold text-gray-900 mb-4">This Month</h3>
+              <div className="space-y-3">
+                {[
+                  { label: "Students", value: students.length },
+                  { label: "Sessions done", value: students.reduce((a, s) => a + (s.snapshots[0]?.sessionCount ?? 0), 0) },
+                  { label: "Homework pending", value: totalPendingHomework, warn: totalPendingHomework > 0 },
+                  { label: "Needs attention", value: needsAttention.length, warn: needsAttention.length > 0 },
+                ].map(stat => (
+                  <div key={stat.label} className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">{stat.label}</span>
+                    <span className={`font-bold text-lg ${stat.warn ? "text-amber-600" : "text-gray-900"}`}>{stat.value}</span>
                   </div>
-                )
-              })}
+                ))}
+              </div>
+              <Link href="/coach/billing">
+                <button className="w-full mt-4 text-sm text-blue-600 border border-blue-200 hover:bg-blue-50 rounded-lg py-2">View Billing →</button>
+              </Link>
             </div>
-          )}
+
+            {/* Homework check */}
+            <div className="bg-white rounded-xl border p-5">
+              <h3 className="font-semibold text-gray-900 mb-4">Homework Status</h3>
+              <div className="space-y-3">
+                {students.map(s => {
+                  const hw = s.homeworkAssignments[0]
+                  return (
+                    <div key={s.id} className="flex items-center justify-between">
+                      <span className="text-sm text-gray-700">{s.name.split(" ")[0]}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                        !hw ? "bg-gray-100 text-gray-500" :
+                        hw.status === "DONE" ? "bg-green-100 text-green-700" :
+                        "bg-orange-100 text-orange-700"
+                      }`}>
+                        {!hw ? "None" : hw.status === "DONE" ? "✓ Done" : "Pending"}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+              <Link href="/coach/homework">
+                <button className="w-full mt-4 text-sm text-gray-600 border border-gray-200 hover:bg-gray-50 rounded-lg py-2">Manage Homework →</button>
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </div>

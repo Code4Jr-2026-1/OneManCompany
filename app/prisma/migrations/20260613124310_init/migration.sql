@@ -7,6 +7,7 @@ CREATE TABLE "User" (
     "image" TEXT,
     "role" TEXT NOT NULL DEFAULT 'STUDENT',
     "password" TEXT,
+    "hourlyRate" REAL,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
@@ -78,11 +79,57 @@ CREATE TABLE "CoachSession" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "studentId" TEXT NOT NULL,
     "date" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "duration" INTEGER NOT NULL DEFAULT 60,
+    "topicsCovered" TEXT,
     "coachNotes" TEXT,
     "wellness" TEXT,
     "aiSummary" TEXT,
+    "homeworkSet" TEXT,
+    "nextSessionDate" DATETIME,
+    "lessonTemplateId" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "CoachSession_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "Student" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "ScheduledSession" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "studentId" TEXT NOT NULL,
+    "scheduledAt" DATETIME NOT NULL,
+    "duration" INTEGER NOT NULL DEFAULT 60,
+    "status" TEXT NOT NULL DEFAULT 'PENDING',
+    "notes" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "ScheduledSession_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "Student" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "Homework" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "studentId" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "resourceUrl" TEXT,
+    "dueDate" DATETIME,
+    "status" TEXT NOT NULL DEFAULT 'PENDING',
+    "completedAt" DATETIME,
+    "studentNote" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "Homework_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "Student" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "LessonTemplate" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "coachId" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "skillLevel" TEXT NOT NULL DEFAULT 'all',
+    "topics" TEXT NOT NULL,
+    "description" TEXT,
+    "duration" INTEGER NOT NULL DEFAULT 60,
+    "isDefault" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "LessonTemplate_coachId_fkey" FOREIGN KEY ("coachId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -138,6 +185,21 @@ CREATE TABLE "ParentReport" (
 );
 
 -- CreateTable
+CREATE TABLE "BillingEntry" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "studentId" TEXT NOT NULL,
+    "month" DATETIME NOT NULL,
+    "sessions" INTEGER NOT NULL DEFAULT 0,
+    "hours" REAL NOT NULL DEFAULT 0,
+    "rateUsed" REAL NOT NULL DEFAULT 0,
+    "amount" REAL NOT NULL DEFAULT 0,
+    "paid" BOOLEAN NOT NULL DEFAULT false,
+    "paidAt" DATETIME,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "BillingEntry_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "Student" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
 CREATE TABLE "Message" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "fromUserId" TEXT NOT NULL,
@@ -170,3 +232,6 @@ CREATE UNIQUE INDEX "StudentContext_studentId_key" ON "StudentContext"("studentI
 
 -- CreateIndex
 CREATE UNIQUE INDEX "ProgressSnapshot_studentId_month_key" ON "ProgressSnapshot"("studentId", "month");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "BillingEntry_studentId_month_key" ON "BillingEntry"("studentId", "month");
