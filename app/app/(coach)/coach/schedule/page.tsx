@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { CoachNav } from "@/components/coach-nav"
 import { WeekCalendar, AddSessionButton } from "./calendar"
 
 export default async function SchedulePage() {
@@ -36,9 +35,11 @@ export default async function SchedulePage() {
       id: ss.id,
       studentId: s.id,
       studentName: s.name,
+      studentPhone: s.phone,
       scheduledAt: ss.scheduledAt.toISOString(),
       duration: ss.duration,
       status: ss.status,
+      meetingLink: ss.meetingLink,
       type: "private" as const,
     }))
   )
@@ -51,22 +52,21 @@ export default async function SchedulePage() {
     duration: gc.duration,
     enrolledCount: gc.enrollments.length,
     capacity: gc.capacity,
+    meetingLink: gc.meetingLink,
+    whatsappGroupLink: gc.whatsappGroupLink,
     type: "group" as const,
   }))
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <CoachNav coachName={coach.name ?? "Coach"} />
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Session Schedule</h1>
-            <p className="text-gray-500 text-sm mt-1">{privateEvents.length} private sessions · {groupClasses.length} group class{groupClasses.length !== 1 ? "es" : ""}</p>
-          </div>
-          <AddSessionButton students={students.map(s => ({ id: s.id, name: s.name }))} />
+    <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Session Schedule</h1>
+          <p className="text-muted-foreground text-sm mt-1">{privateEvents.length} private sessions · {groupClasses.length} group class{groupClasses.length !== 1 ? "es" : ""}</p>
         </div>
-        <WeekCalendar privateEvents={privateEvents} groupEvents={groupEvents} />
+        <AddSessionButton students={students.map(s => ({ id: s.id, name: s.name }))} groupClasses={groupClasses.map(g => ({ id: g.id, name: g.name }))} />
       </div>
+      <WeekCalendar privateEvents={privateEvents} groupEvents={groupEvents} />
     </div>
   )
 }

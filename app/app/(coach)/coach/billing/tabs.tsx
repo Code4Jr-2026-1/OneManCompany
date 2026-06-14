@@ -59,10 +59,10 @@ export function BillingTabs({ students, hourlyRate, groupClasses, currentMonth }
   return (
     <div>
       {/* Tab buttons */}
-      <div className="flex gap-1 mb-5 bg-gray-100 rounded-lg p-1 w-fit">
+      <div className="flex gap-1 mb-5 bg-secondary rounded-lg p-1 w-fit">
         {(["private", "group"] as const).map(t => (
           <button key={t} onClick={() => setTab(t)} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-            tab === t ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+            tab === t ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
           }`}>
             {t === "private" ? "Private Lessons" : "Group Classes"}
           </button>
@@ -74,27 +74,27 @@ export function BillingTabs({ students, hourlyRate, groupClasses, currentMonth }
           {students.map(s => {
             const currentEntry = s.billingEntries.find(e => new Date(e.month).getMonth() === currentMonthDate.getMonth())
             return (
-              <div key={s.id} className="bg-white rounded-xl border">
+              <div key={s.id} className="bg-card border border-border rounded-xl shadow-sm">
                 <div className="px-6 py-4 border-b flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs">
                       {s.name.split(" ").map(n => n[0]).join("").slice(0,2)}
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-900">{s.name}</p>
-                      <p className="text-xs text-gray-400">Rate: ₹{hourlyRate.toLocaleString()}/hr</p>
+                      <p className="font-semibold text-foreground">{s.name}</p>
+                      <p className="text-xs text-muted-foreground">Rate: ₹{hourlyRate.toLocaleString()}/hr</p>
                     </div>
                   </div>
                   {currentEntry && !currentEntry.paid && <MarkPaidButton entryId={currentEntry.id} />}
                 </div>
                 <div className="divide-y">
                   {s.billingEntries.length === 0 ? (
-                    <p className="px-6 py-4 text-sm text-gray-400">No private billing entries yet.</p>
+                    <p className="px-6 py-4 text-sm text-muted-foreground">No private billing entries yet.</p>
                   ) : s.billingEntries.map(e => (
                     <div key={e.id} className="px-6 py-3 flex items-center gap-4">
-                      <span className="text-sm text-gray-500 w-28">{new Date(e.month).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</span>
-                      <span className="text-sm text-gray-700">{e.sessions} sessions · {e.hours}h</span>
-                      <span className="text-sm font-semibold text-gray-900 ml-auto">₹{e.amount.toLocaleString()}</span>
+                      <span className="text-sm text-muted-foreground w-28">{new Date(e.month).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</span>
+                      <span className="text-sm text-foreground">{e.sessions} sessions · {e.hours}h</span>
+                      <span className="text-sm font-semibold text-foreground ml-auto">₹{e.amount.toLocaleString()}</span>
                       <span className={`text-xs px-2 py-0.5 rounded-full ${e.paid ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
                         {e.paid ? "✓ Paid" : "Pending"}
                       </span>
@@ -105,7 +105,7 @@ export function BillingTabs({ students, hourlyRate, groupClasses, currentMonth }
             )
           })}
           {students.length === 0 && (
-            <div className="bg-white rounded-xl border px-6 py-12 text-center text-gray-400">No students yet.</div>
+            <div className="bg-card border border-border rounded-xl shadow-sm px-6 py-12 text-center text-muted-foreground">No students yet.</div>
           )}
         </div>
       )}
@@ -113,32 +113,32 @@ export function BillingTabs({ students, hourlyRate, groupClasses, currentMonth }
       {tab === "group" && (
         <div className="space-y-6">
           {groupClasses.length === 0 && (
-            <div className="bg-white rounded-xl border px-6 py-12 text-center text-gray-400">
+            <div className="bg-card border border-border rounded-xl shadow-sm px-6 py-12 text-center text-muted-foreground">
               No group classes yet. <a href="/coach/group-classes/new" className="text-teal-600 hover:underline">Create one →</a>
             </div>
           )}
           {groupClasses.map(gc => {
             const monthTotal = gc.sessionsThisMonth * gc.groupRate * gc.enrollments.length
             return (
-              <div key={gc.id} className="bg-white rounded-xl border">
+              <div key={gc.id} className="bg-card border border-border rounded-xl shadow-sm">
                 <div className="px-6 py-4 border-b">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-semibold text-gray-900">{gc.name}</p>
-                      <p className="text-xs text-gray-400">₹{gc.groupRate}/student/session · {gc.sessionsThisMonth} sessions this month</p>
+                      <p className="font-semibold text-foreground">{gc.name}</p>
+                      <p className="text-xs text-muted-foreground">₹{gc.groupRate}/student/session · {gc.sessionsThisMonth} sessions this month</p>
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-bold text-teal-700">₹{monthTotal.toLocaleString()}</p>
-                      <p className="text-xs text-gray-400">total this month</p>
+                      <p className="text-xs text-muted-foreground">total this month</p>
                     </div>
                   </div>
                 </div>
                 {gc.enrollments.length === 0 ? (
-                  <p className="px-6 py-4 text-sm text-gray-400">No enrolled students.</p>
+                  <p className="px-6 py-4 text-sm text-muted-foreground">No enrolled students.</p>
                 ) : (
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="text-xs text-gray-400 uppercase border-b">
+                      <tr className="text-xs text-muted-foreground uppercase border-b">
                         <th className="px-6 py-2 text-left">Student</th>
                         <th className="px-6 py-2 text-center">Sessions</th>
                         <th className="px-6 py-2 text-center">Rate</th>
@@ -149,10 +149,10 @@ export function BillingTabs({ students, hourlyRate, groupClasses, currentMonth }
                     <tbody className="divide-y">
                       {gc.enrollments.map(e => (
                         <tr key={e.studentId}>
-                          <td className="px-6 py-3 font-medium text-gray-900">{e.studentName}</td>
-                          <td className="px-6 py-3 text-center text-gray-600">{gc.sessionsThisMonth}</td>
-                          <td className="px-6 py-3 text-center text-gray-600">₹{gc.groupRate}</td>
-                          <td className="px-6 py-3 text-right font-semibold text-gray-900">₹{(gc.sessionsThisMonth * gc.groupRate).toLocaleString()}</td>
+                          <td className="px-6 py-3 font-medium text-foreground">{e.studentName}</td>
+                          <td className="px-6 py-3 text-center text-muted-foreground">{gc.sessionsThisMonth}</td>
+                          <td className="px-6 py-3 text-center text-muted-foreground">₹{gc.groupRate}</td>
+                          <td className="px-6 py-3 text-right font-semibold text-foreground">₹{(gc.sessionsThisMonth * gc.groupRate).toLocaleString()}</td>
                           <td className="px-6 py-3 text-right">
                             <GroupMarkPaidButton
                               classId={gc.id}

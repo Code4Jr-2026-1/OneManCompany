@@ -10,10 +10,10 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
   const student = await prisma.student.findUnique({ where: { id } })
   if (!student) redirect("/coach")
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-background p-8">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Session Notes</h1>
-        <p className="text-gray-500 mb-6">for {student.name}</p>
+        <h1 className="text-2xl font-bold text-foreground mb-2">Session Notes</h1>
+        <p className="text-muted-foreground mb-6">for {student.name}</p>
         <SessionForm studentId={id} studentName={student.name} />
       </div>
     </div>

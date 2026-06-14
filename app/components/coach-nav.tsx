@@ -2,6 +2,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
+import { ChessMateMark, ChessMateWordmark } from "@/components/chessmate-logo"
 
 const tabs = [
   { label: "Today",    href: "/coach",                    icon: "🏠" },
@@ -22,9 +23,11 @@ export function CoachNav({ coachName }: { coachName: string }) {
       <div className="max-w-6xl mx-auto px-6">
         <div className="flex items-center justify-between h-14">
           <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 mr-4">
-              <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white text-xs font-bold">♟</div>
-              <span className="font-semibold text-gray-900 text-sm hidden sm:block">Chess Coach</span>
+            <div className="flex items-center gap-2.5 mr-4">
+              <ChessMateMark size={32} />
+              <div className="hidden sm:block">
+                <ChessMateWordmark size="sm" />
+              </div>
             </div>
             {tabs.map(t => {
               const active = t.href === "/coach" ? path === "/coach" : path.startsWith(t.href)

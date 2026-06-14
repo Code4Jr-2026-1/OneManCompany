@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { CoachNav } from "@/components/coach-nav"
 import Link from "next/link"
 
 export default async function ComparePage() {
@@ -43,28 +42,26 @@ export default async function ComparePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <CoachNav coachName={coach.name ?? "Coach"} />
-      <div className="max-w-6xl mx-auto px-6 py-8">
+    <div className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">⚖ Student Comparison</h1>
-            <p className="text-gray-500 text-sm mt-1">Who&apos;s on track vs who needs more attention</p>
+            <h1 className="text-2xl font-bold text-foreground">⚖ Student Comparison</h1>
+            <p className="text-muted-foreground text-sm mt-1">Who&apos;s on track vs who needs more attention</p>
           </div>
-          <Link href="/coach/students"><button className="border px-4 py-2 rounded-lg text-sm hover:bg-white">← Back to Students</button></Link>
+          <Link href="/coach/students"><button className="border border-border px-4 py-2 rounded-lg text-sm hover:bg-accent">← Back to Students</button></Link>
         </div>
 
-        <div className="bg-white rounded-xl border overflow-x-auto">
+        <div className="bg-card border border-border rounded-xl shadow-sm overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b bg-gray-50">
-                <th className="text-left px-5 py-3 font-semibold text-gray-600">Student</th>
-                <th className="text-center px-4 py-3 font-semibold text-gray-600">Rating</th>
-                <th className="text-center px-4 py-3 font-semibold text-gray-600">Change</th>
-                <th className="text-center px-4 py-3 font-semibold text-gray-600">Sessions</th>
-                <th className="text-center px-4 py-3 font-semibold text-gray-600">HW %</th>
-                <th className="text-center px-4 py-3 font-semibold text-gray-600">Plan %</th>
-                <th className="text-center px-4 py-3 font-semibold text-gray-600">Status</th>
+              <tr className="border-b border-border bg-secondary">
+                <th className="text-left px-5 py-3 font-semibold text-muted-foreground">Student</th>
+                <th className="text-center px-4 py-3 font-semibold text-muted-foreground">Rating</th>
+                <th className="text-center px-4 py-3 font-semibold text-muted-foreground">Change</th>
+                <th className="text-center px-4 py-3 font-semibold text-muted-foreground">Sessions</th>
+                <th className="text-center px-4 py-3 font-semibold text-muted-foreground">HW %</th>
+                <th className="text-center px-4 py-3 font-semibold text-muted-foreground">Plan %</th>
+                <th className="text-center px-4 py-3 font-semibold text-muted-foreground">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -76,32 +73,32 @@ export default async function ComparePage() {
                 const onTrack = (hw ?? 100) >= 60 && (rc ?? 0) >= 0 && sessions >= 3
 
                 return (
-                  <tr key={s.id} className="hover:bg-gray-50">
+                  <tr key={s.id} className="hover:bg-accent">
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs">
                           {s.name.split(" ").map(n => n[0]).join("").slice(0,2)}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{s.name}</p>
-                          <p className="text-xs text-gray-400 capitalize">{s.skillLevel}</p>
+                          <p className="font-medium text-foreground">{s.name}</p>
+                          <p className="text-xs text-muted-foreground capitalize">{s.skillLevel}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-center font-semibold text-gray-900">{s.rating}</td>
+                    <td className="px-4 py-4 text-center font-semibold text-foreground">{s.rating}</td>
                     <td className="px-4 py-4 text-center">
-                      {rc === null ? <span className="text-gray-300">—</span> :
-                       <span className={`font-semibold ${rc > 0 ? "text-green-600" : rc < 0 ? "text-red-500" : "text-gray-400"}`}>
+                      {rc === null ? <span className="text-muted-foreground">—</span> :
+                       <span className={`font-semibold ${rc > 0 ? "text-green-600" : rc < 0 ? "text-red-500" : "text-muted-foreground"}`}>
                          {rc > 0 ? "+" : ""}{rc}
                        </span>}
                     </td>
-                    <td className="px-4 py-4 text-center text-gray-700">{sessions}</td>
+                    <td className="px-4 py-4 text-center text-muted-foreground">{sessions}</td>
                     <td className="px-4 py-4 text-center">
-                      {hw === null ? <span className="text-gray-300">—</span> :
+                      {hw === null ? <span className="text-muted-foreground">—</span> :
                        <span className={`font-semibold ${hw >= 80 ? "text-green-600" : hw >= 50 ? "text-amber-600" : "text-red-500"}`}>{hw}%</span>}
                     </td>
                     <td className="px-4 py-4 text-center">
-                      {pp === null ? <span className="text-gray-300">—</span> :
+                      {pp === null ? <span className="text-muted-foreground">—</span> :
                        <span className={`font-semibold ${pp >= 70 ? "text-green-600" : pp >= 40 ? "text-amber-600" : "text-red-500"}`}>{pp}%</span>}
                     </td>
                     <td className="px-4 py-4 text-center">
@@ -115,7 +112,6 @@ export default async function ComparePage() {
             </tbody>
           </table>
         </div>
-      </div>
     </div>
   )
 }

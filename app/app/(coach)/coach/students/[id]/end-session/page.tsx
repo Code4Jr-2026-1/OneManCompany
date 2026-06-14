@@ -12,12 +12,12 @@ export default async function EndSessionPage({ params }: { params: Promise<{ id:
   if (!student) notFound()
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center gap-3 mb-6">
-          <a href={`/coach/students/${id}`} className="text-gray-500 hover:text-gray-700 text-sm">← Back</a>
-          <span className="text-gray-300">/</span>
-          <h1 className="text-xl font-bold text-gray-900">End Session — {student.name}</h1>
+          <a href={`/coach/students/${id}`} className="text-muted-foreground hover:text-foreground text-sm">← Back</a>
+          <span className="text-muted-foreground">/</span>
+          <h1 className="text-xl font-bold text-foreground">End Session — {student.name}</h1>
         </div>
         <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 text-sm text-blue-700">
           ⚡ Quick capture — 30 seconds. AI will expand this into a full summary.

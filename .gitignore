@@ -34,3 +34,12 @@ next-env.d.ts
 
 # OpenSpec source (npm package cloned locally — not part of this project)
 OpenSpec/
+
+# Unrelated local projects / scratch
+OneManCompany/
+Requirements Backlog/
+
+# Local dev artifacts
+cookies.txt
+dev-server.log
+*.log

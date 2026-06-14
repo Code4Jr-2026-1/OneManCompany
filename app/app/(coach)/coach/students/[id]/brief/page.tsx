@@ -31,20 +31,20 @@ export default async function PreSessionBrief({ params }: { params: Promise<{ id
     ? student.snapshots[0].rating - student.snapshots[1].rating : 0
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b px-6 py-4 flex items-center gap-4">
-        <Link href="/coach/students" className="text-gray-500 hover:text-gray-700 text-sm">← Students</Link>
-        <span className="text-gray-300">/</span>
-        <span className="text-gray-700 font-medium">{student.name}</span>
-        <span className="text-gray-300">/</span>
+    <div className="min-h-screen bg-background">
+      <nav className="bg-card border-b px-6 py-4 flex items-center gap-4">
+        <Link href="/coach/students" className="text-muted-foreground hover:text-foreground text-sm">← Students</Link>
+        <span className="text-muted-foreground">/</span>
+        <span className="text-foreground font-medium">{student.name}</span>
+        <span className="text-muted-foreground">/</span>
         <span className="font-semibold text-blue-600">Pre-Session Brief</span>
       </nav>
 
       <div className="max-w-4xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">📋 Pre-Session Brief</h1>
-            <p className="text-gray-500 text-sm mt-1">{student.name} · {student.skillLevel} · Rating {student.rating} ({ratingChange >= 0 ? "+" : ""}{ratingChange})</p>
+            <h1 className="text-2xl font-bold text-foreground">📋 Pre-Session Brief</h1>
+            <p className="text-muted-foreground text-sm mt-1">{student.name} · {student.skillLevel} · Rating {student.rating} ({ratingChange >= 0 ? "+" : ""}{ratingChange})</p>
           </div>
           <Link href={`/coach/students/${id}/end-session`}>
             <button className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700">Start Session →</button>
@@ -53,15 +53,15 @@ export default async function PreSessionBrief({ params }: { params: Promise<{ id
 
         <div className="grid grid-cols-2 gap-6">
           {/* Last session */}
-          <div className="bg-white rounded-xl border p-5">
-            <h2 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <div className="bg-card border border-border rounded-xl shadow-sm p-5">
+            <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2">
               <span className="text-blue-600">📖</span> Last Session
             </h2>
             {lastSession ? (
               <div className="space-y-2 text-sm">
-                <p className="text-gray-400 text-xs">{new Date(lastSession.date).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })}</p>
-                {lastSession.topicsCovered && <p className="text-gray-700"><span className="font-medium">Covered:</span> {lastSession.topicsCovered}</p>}
-                {lastSession.coachNotes && <p className="text-gray-700">{lastSession.coachNotes}</p>}
+                <p className="text-muted-foreground text-xs">{new Date(lastSession.date).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })}</p>
+                {lastSession.topicsCovered && <p className="text-foreground"><span className="font-medium">Covered:</span> {lastSession.topicsCovered}</p>}
+                {lastSession.coachNotes && <p className="text-foreground">{lastSession.coachNotes}</p>}
                 {lastSession.homeworkSet && (
                   <div className="mt-2 p-2 bg-orange-50 rounded-lg">
                     <p className="text-xs font-medium text-orange-700">Homework set:</p>
@@ -70,17 +70,17 @@ export default async function PreSessionBrief({ params }: { params: Promise<{ id
                 )}
               </div>
             ) : (
-              <p className="text-sm text-gray-400">No previous sessions recorded.</p>
+              <p className="text-sm text-muted-foreground">No previous sessions recorded.</p>
             )}
           </div>
 
           {/* Homework status */}
-          <div className="bg-white rounded-xl border p-5">
-            <h2 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <div className="bg-card border border-border rounded-xl shadow-sm p-5">
+            <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2">
               <span className="text-orange-500">📝</span> Homework Status
             </h2>
             {student.homeworkAssignments.length === 0 ? (
-              <p className="text-sm text-gray-400">No homework assigned yet.</p>
+              <p className="text-sm text-muted-foreground">No homework assigned yet.</p>
             ) : (
               <div className="space-y-2">
                 {student.homeworkAssignments.map(hw => (
@@ -89,8 +89,8 @@ export default async function PreSessionBrief({ params }: { params: Promise<{ id
                       <span className="text-base">{hw.status === "DONE" ? "✅" : "⏳"}</span>
                       <div>
                         <p className="text-sm font-medium">{hw.title}</p>
-                        {hw.studentNote && <p className="text-xs text-gray-500 mt-0.5">Student note: {hw.studentNote}</p>}
-                        {hw.dueDate && <p className="text-xs text-gray-400">Due: {new Date(hw.dueDate).toLocaleDateString()}</p>}
+                        {hw.studentNote && <p className="text-xs text-muted-foreground mt-0.5">Student note: {hw.studentNote}</p>}
+                        {hw.dueDate && <p className="text-xs text-muted-foreground">Due: {new Date(hw.dueDate).toLocaleDateString()}</p>}
                       </div>
                     </div>
                   </div>
@@ -100,8 +100,8 @@ export default async function PreSessionBrief({ params }: { params: Promise<{ id
           </div>
 
           {/* Weak areas */}
-          <div className="bg-white rounded-xl border p-5">
-            <h2 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <div className="bg-card border border-border rounded-xl shadow-sm p-5">
+            <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2">
               <span className="text-red-500">🎯</span> Weaknesses
             </h2>
             {student.weakness && (
@@ -118,22 +118,22 @@ export default async function PreSessionBrief({ params }: { params: Promise<{ id
                 </div>
                 {Object.entries(topicMastery).sort((a,b) => a[1]-b[1]).slice(1,3).map(([t, v]) => (
                   <div key={t} className="flex justify-between text-sm items-center">
-                    <span className="capitalize text-gray-600">{t}</span>
+                    <span className="capitalize text-muted-foreground">{t}</span>
                     <div className="flex items-center gap-2">
-                      <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="w-24 h-1.5 bg-secondary rounded-full overflow-hidden">
                         <div className="h-full bg-blue-400 rounded-full" style={{ width: `${v}%` }} />
                       </div>
-                      <span className="text-gray-400 text-xs w-8 text-right">{v}%</span>
+                      <span className="text-muted-foreground text-xs w-8 text-right">{v}%</span>
                     </div>
                   </div>
                 ))}
               </div>
-            ) : <p className="text-sm text-gray-400">No mastery data yet.</p>}
+            ) : <p className="text-sm text-muted-foreground">No mastery data yet.</p>}
           </div>
 
           {/* AI session suggestion */}
-          <div className="bg-white rounded-xl border p-5">
-            <h2 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <div className="bg-card border border-border rounded-xl shadow-sm p-5">
+            <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2">
               <span className="text-purple-600">✦</span> AI Session Plan
             </h2>
             <AiSuggestion
@@ -154,7 +154,7 @@ export default async function PreSessionBrief({ params }: { params: Promise<{ id
             </button>
           </Link>
           <Link href={`/coach/students/${id}`}>
-            <button className="border px-6 py-3 rounded-xl text-sm font-medium hover:bg-gray-50">Full Profile</button>
+            <button className="border px-6 py-3 rounded-xl text-sm font-medium hover:bg-accent">Full Profile</button>
           </Link>
         </div>
       </div>

@@ -16,6 +16,8 @@ interface Props {
   currentStartTime: string
   currentDuration: number
   currentGroupRate: number
+  currentMeetingLink: string
+  currentWhatsappGroupLink: string
 }
 
 export function GroupClassActions(props: Props) {
@@ -42,6 +44,8 @@ export function GroupClassActions(props: Props) {
         startTime: fd.get("startTime"),
         duration: fd.get("duration"),
         groupRate: fd.get("groupRate"),
+        meetingLink: fd.get("meetingLink"),
+        whatsappGroupLink: fd.get("whatsappGroupLink"),
       }),
     })
     setLoading(false)
@@ -59,65 +63,73 @@ export function GroupClassActions(props: Props) {
   return (
     <>
       <div className="flex gap-2">
-        <button onClick={() => setEditOpen(true)} className="border px-3 py-1.5 rounded-lg text-sm hover:bg-gray-50">Edit</button>
+        <button onClick={() => setEditOpen(true)} className="border px-3 py-1.5 rounded-lg text-sm hover:bg-accent">Edit</button>
         <button onClick={() => setCancelOpen(true)} className="border border-red-200 text-red-600 px-3 py-1.5 rounded-lg text-sm hover:bg-red-50">Cancel Class</button>
       </div>
 
       {editOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setEditOpen(false)}>
-          <div className="bg-white rounded-xl p-6 w-[480px] shadow-xl max-h-screen overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <h2 className="font-bold text-gray-900 mb-4">Edit Group Class</h2>
+          <div className="bg-card rounded-xl p-6 w-[480px] shadow-xl max-h-screen overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <h2 className="font-bold text-foreground mb-4">Edit Group Class</h2>
             {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
             <form onSubmit={handleEdit} className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1">Name</label>
+                <label className="text-sm font-medium text-foreground block mb-1">Name</label>
                 <input name="name" defaultValue={props.currentName} required className="w-full border rounded-lg px-3 py-2 text-sm" />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1">Description</label>
+                <label className="text-sm font-medium text-foreground block mb-1">Description</label>
                 <textarea name="description" defaultValue={props.currentDescription} rows={2} className="w-full border rounded-lg px-3 py-2 text-sm resize-none" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1">Skill Level</label>
+                  <label className="text-sm font-medium text-foreground block mb-1">Skill Level</label>
                   <select name="skillLevel" defaultValue={props.currentSkillLevel} className="w-full border rounded-lg px-3 py-2 text-sm">
                     {SKILL_LEVELS.map(l => <option key={l} value={l}>{l.charAt(0).toUpperCase() + l.slice(1)}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1">Capacity</label>
+                  <label className="text-sm font-medium text-foreground block mb-1">Capacity</label>
                   <input name="capacity" type="number" min={1} defaultValue={props.currentCapacity} className="w-full border rounded-lg px-3 py-2 text-sm" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1">Day</label>
+                  <label className="text-sm font-medium text-foreground block mb-1">Day</label>
                   <select name="dayOfWeek" defaultValue={props.currentDayOfWeek} className="w-full border rounded-lg px-3 py-2 text-sm">
                     {DAYS.map((d, i) => <option key={i} value={i}>{d}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1">Start Time</label>
+                  <label className="text-sm font-medium text-foreground block mb-1">Start Time</label>
                   <input name="startTime" type="time" defaultValue={props.currentStartTime} className="w-full border rounded-lg px-3 py-2 text-sm" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1">Duration (min)</label>
+                  <label className="text-sm font-medium text-foreground block mb-1">Duration (min)</label>
                   <select name="duration" defaultValue={props.currentDuration} className="w-full border rounded-lg px-3 py-2 text-sm">
                     {[45, 60, 90, 120].map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1">Rate (₹/session)</label>
+                  <label className="text-sm font-medium text-foreground block mb-1">Rate (₹/session)</label>
                   <input name="groupRate" type="number" min={0} step={50} defaultValue={props.currentGroupRate} className="w-full border rounded-lg px-3 py-2 text-sm" />
                 </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground block mb-1">Meeting Link</label>
+                <input name="meetingLink" type="url" defaultValue={props.currentMeetingLink} placeholder="https://meet.google.com/..." className="w-full border rounded-lg px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground block mb-1">WhatsApp Group Link</label>
+                <input name="whatsappGroupLink" type="url" defaultValue={props.currentWhatsappGroupLink} placeholder="https://chat.whatsapp.com/..." className="w-full border rounded-lg px-3 py-2 text-sm" />
               </div>
               <div className="flex gap-3 pt-1">
                 <button type="submit" disabled={loading} className="flex-1 bg-teal-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-teal-700 disabled:opacity-50">
                   {loading ? "Saving…" : "Save Changes"}
                 </button>
-                <button type="button" onClick={() => setEditOpen(false)} className="border px-4 py-2 rounded-lg text-sm hover:bg-gray-50">Cancel</button>
+                <button type="button" onClick={() => setEditOpen(false)} className="border px-4 py-2 rounded-lg text-sm hover:bg-accent">Cancel</button>
               </div>
             </form>
           </div>
@@ -126,14 +138,14 @@ export function GroupClassActions(props: Props) {
 
       {cancelOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setCancelOpen(false)}>
-          <div className="bg-white rounded-xl p-6 w-96 shadow-xl" onClick={e => e.stopPropagation()}>
-            <h2 className="font-bold text-gray-900 mb-2">Cancel &quot;{props.className}&quot;?</h2>
-            <p className="text-sm text-gray-500 mb-5">All enrolled students will be removed. This cannot be undone. Sessions and billing history will be preserved.</p>
+          <div className="bg-card rounded-xl p-6 w-96 shadow-xl" onClick={e => e.stopPropagation()}>
+            <h2 className="font-bold text-foreground mb-2">Cancel &quot;{props.className}&quot;?</h2>
+            <p className="text-sm text-muted-foreground mb-5">All enrolled students will be removed. This cannot be undone. Sessions and billing history will be preserved.</p>
             <div className="flex gap-3">
               <button onClick={handleCancel} disabled={loading} className="flex-1 bg-red-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50">
                 {loading ? "Cancelling…" : "Yes, Cancel Class"}
               </button>
-              <button onClick={() => setCancelOpen(false)} className="border px-4 py-2 rounded-lg text-sm hover:bg-gray-50">Keep</button>
+              <button onClick={() => setCancelOpen(false)} className="border px-4 py-2 rounded-lg text-sm hover:bg-accent">Keep</button>
             </div>
           </div>
         </div>
@@ -172,8 +184,8 @@ export function EnrollButton({ classId, students }: { classId: string; students:
       </button>
       {open && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setOpen(false)}>
-          <div className="bg-white rounded-xl p-6 w-80 shadow-xl" onClick={e => e.stopPropagation()}>
-            <h3 className="font-bold text-gray-900 mb-4">Enroll Student</h3>
+          <div className="bg-card rounded-xl p-6 w-80 shadow-xl" onClick={e => e.stopPropagation()}>
+            <h3 className="font-bold text-foreground mb-4">Enroll Student</h3>
             {error && <p className="text-sm text-red-600 mb-2">{error}</p>}
             <select value={studentId} onChange={e => setStudentId(e.target.value)} className="w-full border rounded-lg px-3 py-2 text-sm mb-4">
               <option value="">Select a student…</option>
@@ -183,7 +195,7 @@ export function EnrollButton({ classId, students }: { classId: string; students:
               <button onClick={enroll} disabled={!studentId || loading} className="flex-1 bg-teal-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-teal-700 disabled:opacity-50">
                 {loading ? "Enrolling…" : "Enroll"}
               </button>
-              <button onClick={() => setOpen(false)} className="border px-4 py-2 rounded-lg text-sm hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setOpen(false)} className="border px-4 py-2 rounded-lg text-sm hover:bg-accent">Cancel</button>
             </div>
           </div>
         </div>
@@ -253,40 +265,40 @@ export function LogSessionButton({ classId }: { classId: string }) {
       </button>
       {open && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto py-8" onClick={() => setOpen(false)}>
-          <div className="bg-white rounded-xl p-6 w-[480px] shadow-xl" onClick={e => e.stopPropagation()}>
-            <h3 className="font-bold text-gray-900 mb-4">Log Group Session</h3>
+          <div className="bg-card rounded-xl p-6 w-[480px] shadow-xl" onClick={e => e.stopPropagation()}>
+            <h3 className="font-bold text-foreground mb-4">Log Group Session</h3>
             <form onSubmit={save} className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1">Date *</label>
+                <label className="text-sm font-medium text-foreground block mb-1">Date *</label>
                 <input name="date" type="date" required defaultValue={today} className="w-full border rounded-lg px-3 py-2 text-sm" />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1">Topics Covered</label>
+                <label className="text-sm font-medium text-foreground block mb-1">Topics Covered</label>
                 <input name="topicsCovered" placeholder="e.g. Ruy Lopez, endgame principles" className="w-full border rounded-lg px-3 py-2 text-sm" />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1">Notes</label>
+                <label className="text-sm font-medium text-foreground block mb-1">Notes</label>
                 <textarea name="coachNotes" rows={3} placeholder="Session notes…" className="w-full border rounded-lg px-3 py-2 text-sm resize-none" />
               </div>
               <div>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={hasHomework} onChange={e => setHasHomework(e.target.checked)} className="rounded" />
-                  <span className="text-sm font-medium text-gray-700">Assign homework to all students</span>
+                  <span className="text-sm font-medium text-foreground">Assign homework to all students</span>
                 </label>
               </div>
               {hasHomework && (
-                <div className="border rounded-lg p-4 space-y-3 bg-gray-50">
+                <div className="border rounded-lg p-4 space-y-3 bg-secondary">
                   <div>
-                    <label className="text-sm font-medium text-gray-700 block mb-1">Homework Title *</label>
-                    <input name="hwTitle" required placeholder="e.g. Practise 10 tactics puzzles" className="w-full border rounded-lg px-3 py-2 text-sm bg-white" />
+                    <label className="text-sm font-medium text-foreground block mb-1">Homework Title *</label>
+                    <input name="hwTitle" required placeholder="e.g. Practise 10 tactics puzzles" className="w-full border rounded-lg px-3 py-2 text-sm bg-card" />
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-700 block mb-1">Description</label>
-                    <textarea name="hwDescription" rows={2} placeholder="Details…" className="w-full border rounded-lg px-3 py-2 text-sm resize-none bg-white" />
+                    <label className="text-sm font-medium text-foreground block mb-1">Description</label>
+                    <textarea name="hwDescription" rows={2} placeholder="Details…" className="w-full border rounded-lg px-3 py-2 text-sm resize-none bg-card" />
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-700 block mb-1">Due Date</label>
-                    <input name="hwDueDate" type="date" className="w-full border rounded-lg px-3 py-2 text-sm bg-white" />
+                    <label className="text-sm font-medium text-foreground block mb-1">Due Date</label>
+                    <input name="hwDueDate" type="date" className="w-full border rounded-lg px-3 py-2 text-sm bg-card" />
                   </div>
                 </div>
               )}
@@ -294,7 +306,7 @@ export function LogSessionButton({ classId }: { classId: string }) {
                 <button type="submit" disabled={loading} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
                   {loading ? "Saving…" : "Log Session"}
                 </button>
-                <button type="button" onClick={() => setOpen(false)} className="border px-4 py-2 rounded-lg text-sm hover:bg-gray-50">Cancel</button>
+                <button type="button" onClick={() => setOpen(false)} className="border px-4 py-2 rounded-lg text-sm hover:bg-accent">Cancel</button>
               </div>
             </form>
           </div>

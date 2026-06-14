@@ -2,7 +2,6 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { CoachNav } from "@/components/coach-nav"
 import { StudentSearch } from "./search"
 
 export default async function StudentsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
@@ -42,20 +41,18 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <CoachNav coachName={coach.name ?? "Coach"} />
-      <div className="max-w-6xl mx-auto px-6 py-8">
+    <div className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">My Students</h1>
-            <p className="text-gray-500 text-sm mt-1">
+            <h1 className="text-2xl font-bold text-foreground">My Students</h1>
+            <p className="text-muted-foreground text-sm mt-1">
               {students.length} student{students.length !== 1 ? "s" : ""}{q ? ` matching "${q}"` : " enrolled"}
             </p>
           </div>
           <div className="flex items-center gap-3">
             <StudentSearch defaultValue={q ?? ""} />
             <Link href="/coach/compare">
-              <button className="border px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 text-gray-700">⚖ Compare</button>
+              <button className="border px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent text-foreground">⚖ Compare</button>
             </Link>
             <Link href="/coach/students/new">
               <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">+ Add Student</button>
@@ -64,16 +61,16 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
         </div>
 
         {/* Legend */}
-        <div className="flex items-center gap-4 mb-3 text-xs text-gray-400">
-          <span className="font-medium text-gray-500">Trend (vs last month):</span>
+        <div className="flex items-center gap-4 mb-3 text-xs text-muted-foreground">
+          <span className="font-medium text-muted-foreground">Trend (vs last month):</span>
           <span className="flex items-center gap-1"><span className="text-green-600 font-bold">↑</span> Rating improved</span>
           <span className="flex items-center gap-1"><span className="text-red-500 font-bold">↓</span> Rating dropped</span>
           <span className="flex items-center gap-1"><span className="text-yellow-500 font-bold">→</span> No change</span>
-          <span className="flex items-center gap-1"><span className="text-gray-400 font-bold">✦</span> New / no data yet</span>
+          <span className="flex items-center gap-1"><span className="text-muted-foreground font-bold">✦</span> New / no data yet</span>
         </div>
 
-        <div className="bg-white rounded-xl border">
-          <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b text-xs font-semibold text-gray-400 uppercase tracking-wide">
+        <div className="bg-card border border-border rounded-xl shadow-sm">
+          <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             <div className="col-span-3">Student</div>
             <div className="col-span-1 text-center">Rating</div>
             <div className="col-span-1 text-center">Trend</div>
@@ -83,7 +80,7 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
             <div className="col-span-2 text-right">Actions</div>
           </div>
           {students.length === 0 ? (
-            <div className="px-6 py-12 text-center text-gray-400">
+            <div className="px-6 py-12 text-center text-muted-foreground">
               {q ? <>No students match &quot;{q}&quot;.</> : <>No students yet. <Link href="/coach/students/new" className="text-blue-600 hover:underline">Add your first student →</Link></>}
             </div>
           ) : students.map(s => {
@@ -93,20 +90,20 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
             const next = s.scheduledSessions[0]
             const initials = s.name.split(" ").map(n => n[0]).join("").slice(0,2)
             return (
-              <div key={s.id} className={`grid grid-cols-12 gap-4 px-6 py-4 border-b last:border-0 items-center hover:bg-gray-50 ${days >= 7 ? "bg-red-50/30" : ""}`}>
+              <div key={s.id} className={`grid grid-cols-12 gap-4 px-6 py-4 border-b last:border-0 items-center hover:bg-accent ${days >= 7 ? "bg-red-50/30" : ""}`}>
                 <div className="col-span-3 flex items-center gap-3">
                   <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs flex-shrink-0">{initials}</div>
                   <div>
-                    <p className="font-medium text-gray-900 text-sm">{s.name}</p>
-                    <p className="text-xs text-gray-400 capitalize">{s.skillLevel}</p>
+                    <p className="font-medium text-foreground text-sm">{s.name}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{s.skillLevel}</p>
                   </div>
                 </div>
                 <div className="col-span-1 text-center">
-                  <span className="font-semibold text-gray-900">{s.rating}</span>
+                  <span className="font-semibold text-foreground">{s.rating}</span>
                 </div>
                 <div className="col-span-1 text-center">
                   {t === "new" ? (
-                    <span className="text-gray-400 text-sm" title="No monthly snapshots yet — trend will appear after first progress snapshot">✦ New</span>
+                    <span className="text-muted-foreground text-sm" title="No monthly snapshots yet — trend will appear after first progress snapshot">✦ New</span>
                   ) : t === "up" ? (
                     <span className="text-green-600 font-semibold" title={`Rating improved by ${delta} points vs last month`}>
                       ↑ <span className="text-xs">+{delta}</span>
@@ -116,16 +113,16 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
                       ↓ <span className="text-xs">{delta}</span>
                     </span>
                   ) : (
-                    <span className="text-yellow-500 font-semibold" title="Rating unchanged vs last month">→ <span className="text-xs text-gray-400">±0</span></span>
+                    <span className="text-yellow-500 font-semibold" title="Rating unchanged vs last month">→ <span className="text-xs text-muted-foreground">±0</span></span>
                   )}
                 </div>
                 <div className="col-span-2 text-center">
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${!hw ? "bg-gray-100 text-gray-500" : "bg-orange-100 text-orange-700"}`}>
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${!hw ? "bg-secondary text-muted-foreground" : "bg-orange-100 text-orange-700"}`}>
                     {!hw ? "✓ Clear" : "⏳ Pending"}
                   </span>
                 </div>
-                <div className="col-span-2 text-sm text-gray-600">
-                  {next ? new Date(next.scheduledAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : <span className="text-gray-400">Not scheduled</span>}
+                <div className="col-span-2 text-sm text-muted-foreground">
+                  {next ? new Date(next.scheduledAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : <span className="text-muted-foreground">Not scheduled</span>}
                 </div>
                 <div className="col-span-1 text-center">
                   <span className={`text-xs font-semibold ${days >= 7 ? "text-red-600" : days >= 4 ? "text-amber-600" : "text-green-600"}`}>
@@ -133,7 +130,7 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
                   </span>
                 </div>
                 <div className="col-span-2 flex gap-1.5 justify-end">
-                  <Link href={`/coach/students/${s.id}`}><button className="text-xs bg-gray-100 hover:bg-gray-200 px-2.5 py-1.5 rounded text-gray-700">View</button></Link>
+                  <Link href={`/coach/students/${s.id}`}><button className="text-xs bg-secondary hover:bg-accent px-2.5 py-1.5 rounded text-foreground">View</button></Link>
                   <Link href={`/coach/students/${s.id}/brief`}><button className="text-xs bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded text-blue-700">Brief</button></Link>
                   <Link href={`/coach/students/${s.id}/end-session`}><button className="text-xs bg-green-50 hover:bg-green-100 px-2.5 py-1.5 rounded text-green-700">End</button></Link>
                 </div>
@@ -141,7 +138,6 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
             )
           })}
         </div>
-      </div>
     </div>
   )
 }

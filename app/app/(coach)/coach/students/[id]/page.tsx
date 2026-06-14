@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect, notFound } from "next/navigation"
 import Link from "next/link"
+import { PhoneEditor } from "./phone-editor"
 
 export default async function StudentDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -27,11 +28,11 @@ export default async function StudentDetail({ params }: { params: Promise<{ id: 
   const topicMastery: Record<string, number> = student.snapshots[0] ? JSON.parse(student.snapshots[0].topicMastery) : {}
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b px-6 py-4 flex items-center gap-4">
-        <Link href="/coach/students" className="text-gray-500 hover:text-gray-700 text-sm">← Students</Link>
-        <span className="text-gray-300">/</span>
-        <span className="font-semibold text-gray-900">{student.name}</span>
+    <div className="min-h-screen bg-background">
+      <nav className="bg-card border-b px-6 py-4 flex items-center gap-4">
+        <Link href="/coach/students" className="text-muted-foreground hover:text-foreground text-sm">← Students</Link>
+        <span className="text-muted-foreground">/</span>
+        <span className="font-semibold text-foreground">{student.name}</span>
         <div className="ml-auto flex gap-2">
           <Link href={`/coach/students/${id}/brief`}>
             <button className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-700">📋 Brief</button>
@@ -45,37 +46,38 @@ export default async function StudentDetail({ params }: { params: Promise<{ id: 
       <div className="max-w-6xl mx-auto px-6 py-8 grid grid-cols-3 gap-6">
         {/* Left: profile + context */}
         <div className="col-span-1 space-y-4">
-          <div className="bg-white rounded-xl border p-5">
+          <div className="bg-card border border-border rounded-xl shadow-sm p-5">
             <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xl mx-auto mb-3">
               {student.name.split(" ").map(n => n[0]).join("").slice(0,2)}
             </div>
-            <h2 className="text-lg font-bold text-gray-900 text-center">{student.name}</h2>
-            <p className="text-sm text-gray-500 text-center capitalize">{student.skillLevel}</p>
+            <h2 className="text-lg font-bold text-foreground text-center">{student.name}</h2>
+            <p className="text-sm text-muted-foreground text-center capitalize">{student.skillLevel}</p>
             <div className="mt-4 space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-gray-500">Rating</span><span className="font-semibold">{student.rating}</span></div>
-              <div className="flex justify-between"><span className="text-gray-500">Age</span><span className="font-semibold">{student.age ?? "—"}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Rating</span><span className="font-semibold">{student.rating}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Age</span><span className="font-semibold">{student.age ?? "—"}</span></div>
+              <div className="flex justify-between items-center"><span className="text-muted-foreground">WhatsApp</span><PhoneEditor studentId={student.id} phone={student.phone} /></div>
             </div>
-            {student.goals && <div className="mt-4 p-3 bg-blue-50 rounded-lg"><p className="text-xs text-gray-500 mb-1">Goals</p><p className="text-sm text-gray-700">{student.goals}</p></div>}
+            {student.goals && <div className="mt-4 p-3 bg-blue-50 rounded-lg"><p className="text-xs text-muted-foreground mb-1">Goals</p><p className="text-sm text-foreground">{student.goals}</p></div>}
             {student.weakness && <div className="mt-2 p-3 bg-red-50 rounded-lg"><p className="text-xs text-red-400 mb-1">Known Weaknesses</p><p className="text-sm text-red-700">{student.weakness}</p></div>}
           </div>
 
           {student.context && (
-            <div className="bg-white rounded-xl border p-5">
-              <h3 className="font-semibold text-gray-900 mb-3">✦ AI Context</h3>
-              <p className="text-sm text-gray-600 leading-relaxed">{student.context.contextSummary}</p>
+            <div className="bg-card border border-border rounded-xl shadow-sm p-5">
+              <h3 className="font-semibold text-foreground mb-3">✦ AI Context</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{student.context.contextSummary}</p>
             </div>
           )}
 
           {Object.keys(topicMastery).length > 0 && (
-            <div className="bg-white rounded-xl border p-5">
-              <h3 className="font-semibold text-gray-900 mb-3">Topic Mastery</h3>
+            <div className="bg-card border border-border rounded-xl shadow-sm p-5">
+              <h3 className="font-semibold text-foreground mb-3">Topic Mastery</h3>
               <div className="space-y-3">
                 {Object.entries(topicMastery).map(([topic, score]) => (
                   <div key={topic}>
-                    <div className="flex justify-between text-xs text-gray-600 mb-1 capitalize">
+                    <div className="flex justify-between text-xs text-muted-foreground mb-1 capitalize">
                       <span>{topic}</span><span>{score}%</span>
                     </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
                       <div className="h-full bg-blue-500 rounded-full" style={{ width: `${score}%` }} />
                     </div>
                   </div>
@@ -88,17 +90,17 @@ export default async function StudentDetail({ params }: { params: Promise<{ id: 
         {/* Right: sessions, plan, analyses, homework */}
         <div className="col-span-2 space-y-4">
           {plan && (
-            <div className="bg-white rounded-xl border p-5">
-              <h3 className="font-semibold text-gray-900 mb-3">Active Improvement Plan</h3>
+            <div className="bg-card border border-border rounded-xl shadow-sm p-5">
+              <h3 className="font-semibold text-foreground mb-3">Active Improvement Plan</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-gray-500 mb-2">Topics</p>
-                  {topics.map(t => <div key={t} className="text-sm text-gray-700 flex items-center gap-2 mb-1"><span className="w-1.5 h-1.5 bg-blue-500 rounded-full" />{t}</div>)}
+                  <p className="text-xs text-muted-foreground mb-2">Topics</p>
+                  {topics.map(t => <div key={t} className="text-sm text-foreground flex items-center gap-2 mb-1"><span className="w-1.5 h-1.5 bg-blue-500 rounded-full" />{t}</div>)}
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-2">Milestones</p>
+                  <p className="text-xs text-muted-foreground mb-2">Milestones</p>
                   {milestones.map((m, i) => (
-                    <div key={i} className={`text-sm flex items-center gap-2 mb-1 ${m.done ? "text-green-600" : "text-gray-700"}`}>
+                    <div key={i} className={`text-sm flex items-center gap-2 mb-1 ${m.done ? "text-green-600" : "text-foreground"}`}>
                       <span>{m.done ? "✓" : "○"}</span>{m.title}
                     </div>
                   ))}
@@ -108,10 +110,10 @@ export default async function StudentDetail({ params }: { params: Promise<{ id: 
           )}
 
           {/* Homework */}
-          <div className="bg-white rounded-xl border p-5">
-            <h3 className="font-semibold text-gray-900 mb-3">Homework</h3>
+          <div className="bg-card border border-border rounded-xl shadow-sm p-5">
+            <h3 className="font-semibold text-foreground mb-3">Homework</h3>
             {student.homeworkAssignments.length === 0 ? (
-              <p className="text-sm text-gray-400">No homework assigned yet.</p>
+              <p className="text-sm text-muted-foreground">No homework assigned yet.</p>
             ) : (
               <div className="space-y-2">
                 {student.homeworkAssignments.map(hw => (
@@ -119,7 +121,7 @@ export default async function StudentDetail({ params }: { params: Promise<{ id: 
                     <span className="text-base">{hw.status === "DONE" ? "✅" : "⏳"}</span>
                     <div className="flex-1">
                       <p className="text-sm font-medium">{hw.title}</p>
-                      {hw.dueDate && <p className="text-xs text-gray-400">Due {new Date(hw.dueDate).toLocaleDateString()}</p>}
+                      {hw.dueDate && <p className="text-xs text-muted-foreground">Due {new Date(hw.dueDate).toLocaleDateString()}</p>}
                     </div>
                   </div>
                 ))}
@@ -128,13 +130,13 @@ export default async function StudentDetail({ params }: { params: Promise<{ id: 
           </div>
 
           {/* Sessions */}
-          <div className="bg-white rounded-xl border p-5">
+          <div className="bg-card border border-border rounded-xl shadow-sm p-5">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-gray-900">Recent Sessions</h3>
+              <h3 className="font-semibold text-foreground">Recent Sessions</h3>
               <Link href={`/coach/students/${id}/end-session`} className="text-sm text-blue-600 hover:underline">+ Log Session</Link>
             </div>
             {student.coachSessions.length === 0 ? (
-              <p className="text-sm text-gray-400">No sessions recorded yet.</p>
+              <p className="text-sm text-muted-foreground">No sessions recorded yet.</p>
             ) : (
               <div className="space-y-3">
                 {student.coachSessions.map(s => {
@@ -142,8 +144,8 @@ export default async function StudentDetail({ params }: { params: Promise<{ id: 
                   try { if (s.aiAnalysis) analysis = JSON.parse(s.aiAnalysis) } catch { /* ignore */ }
                   return (
                     <div key={s.id} className="border-l-2 border-blue-200 pl-3">
-                      <p className="text-xs text-gray-400">{new Date(s.date).toLocaleDateString()} · {s.duration} min · {s.wellness}</p>
-                      {s.topicsCovered && <p className="text-sm font-medium text-gray-800">{s.topicsCovered}</p>}
+                      <p className="text-xs text-muted-foreground">{new Date(s.date).toLocaleDateString()} · {s.duration} min · {s.wellness}</p>
+                      {s.topicsCovered && <p className="text-sm font-medium text-foreground">{s.topicsCovered}</p>}
                       {s.aiSummary && <p className="text-xs text-purple-600 mt-1">✦ {s.aiSummary}</p>}
                       {analysis && (analysis.weaknessObserved as string) && !(analysis.weaknessObserved as string).toLowerCase().includes("unable") && (
                         <p className="text-xs text-red-500 mt-0.5">⚠ {analysis.weaknessObserved as string}</p>
@@ -160,16 +162,16 @@ export default async function StudentDetail({ params }: { params: Promise<{ id: 
           </div>
 
           {/* Game Analyses */}
-          <div className="bg-white rounded-xl border p-5">
-            <h3 className="font-semibold text-gray-900 mb-3">Game Analyses</h3>
+          <div className="bg-card border border-border rounded-xl shadow-sm p-5">
+            <h3 className="font-semibold text-foreground mb-3">Game Analyses</h3>
             {student.gameAnalyses.length === 0 ? (
-              <p className="text-sm text-gray-400">No game analyses yet.</p>
+              <p className="text-sm text-muted-foreground">No game analyses yet.</p>
             ) : (
               <div className="space-y-3">
                 {student.gameAnalyses.map(a => (
-                  <div key={a.id} className="bg-gray-50 rounded-lg p-3">
-                    <p className="text-xs text-gray-400">{new Date(a.createdAt).toLocaleDateString()}</p>
-                    {a.aiAnalysis && <p className="text-sm text-gray-700 mt-1">{a.aiAnalysis.slice(0, 200)}…</p>}
+                  <div key={a.id} className="bg-secondary rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground">{new Date(a.createdAt).toLocaleDateString()}</p>
+                    {a.aiAnalysis && <p className="text-sm text-foreground mt-1">{a.aiAnalysis.slice(0, 200)}…</p>}
                   </div>
                 ))}
               </div>

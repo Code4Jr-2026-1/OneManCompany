@@ -22,6 +22,7 @@ export function AddStudentForm({ coachId }: { coachId: string }) {
         goals: fd.get("goals"),
         weakness: fd.get("weakness"),
         notes: fd.get("notes"),
+        phone: fd.get("phone"),
       }),
     })
     router.push("/coach")
@@ -29,20 +30,21 @@ export function AddStudentForm({ coachId }: { coachId: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-xl border p-6 space-y-5">
+    <form onSubmit={handleSubmit} className="bg-card border border-border rounded-xl shadow-sm p-6 space-y-5">
       {[
         { label: "Full Name", name: "name", type: "text", required: true, placeholder: "Student name" },
         { label: "Age", name: "age", type: "number", required: false, placeholder: "e.g. 14" },
         { label: "Current Rating", name: "rating", type: "number", required: false, placeholder: "0 if unrated" },
+        { label: "WhatsApp Number", name: "phone", type: "tel", required: false, placeholder: "e.g. 919876543210 (with country code)" },
       ].map(f => (
         <div key={f.name}>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{f.label}</label>
+          <label className="block text-sm font-medium text-foreground mb-1">{f.label}</label>
           <input name={f.name} type={f.type} required={f.required} placeholder={f.placeholder}
             className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
       ))}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Skill Level</label>
+        <label className="block text-sm font-medium text-foreground mb-1">Skill Level</label>
         <select name="skillLevel" className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
           <option value="beginner">Beginner</option>
           <option value="intermediate">Intermediate</option>
@@ -50,19 +52,19 @@ export function AddStudentForm({ coachId }: { coachId: string }) {
         </select>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Goals</label>
+        <label className="block text-sm font-medium text-foreground mb-1">Goals</label>
         <textarea name="goals" rows={2} placeholder="What does this student want to achieve?"
           className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Known Weaknesses <span className="text-gray-400 font-normal">(areas to focus on)</span>
+        <label className="block text-sm font-medium text-foreground mb-1">
+          Known Weaknesses <span className="text-muted-foreground font-normal">(areas to focus on)</span>
         </label>
         <textarea name="weakness" rows={2} placeholder="e.g. Endgame technique, time management, blundering pieces under pressure"
           className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Coach Notes</label>
+        <label className="block text-sm font-medium text-foreground mb-1">Coach Notes</label>
         <textarea name="notes" rows={2} placeholder="Initial observations..."
           className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
       </div>
@@ -70,7 +72,7 @@ export function AddStudentForm({ coachId }: { coachId: string }) {
         <button type="submit" disabled={loading} className="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
           {loading ? "Saving…" : "Add Student"}
         </button>
-        <button type="button" onClick={() => router.back()} className="border px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
+        <button type="button" onClick={() => router.back()} className="border px-6 py-2 rounded-lg text-sm font-medium hover:bg-accent">Cancel</button>
       </div>
     </form>
   )

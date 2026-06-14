@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
   if (!coach) return NextResponse.json({ error: "Not found" }, { status: 404 })
 
   const body = await req.json()
-  const { name, description, skillLevel, capacity, dayOfWeek, startTime, duration, groupRate } = body
+  const { name, description, skillLevel, capacity, dayOfWeek, startTime, duration, groupRate, meetingLink, whatsappGroupLink } = body
 
   const groupClass = await prisma.groupClass.create({
     data: {
@@ -44,6 +44,8 @@ export async function POST(req: NextRequest) {
       startTime,
       duration: Number(duration),
       groupRate: Number(groupRate),
+      meetingLink: meetingLink || null,
+      whatsappGroupLink: whatsappGroupLink || null,
     },
   })
 

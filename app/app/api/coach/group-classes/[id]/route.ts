@@ -64,6 +64,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       startTime: body.startTime,
       duration: body.duration !== undefined ? Number(body.duration) : undefined,
       groupRate: body.groupRate !== undefined ? Number(body.groupRate) : undefined,
+      meetingLink: body.meetingLink !== undefined ? (body.meetingLink || null) : undefined,
+      whatsappGroupLink: body.whatsappGroupLink !== undefined ? (body.whatsappGroupLink || null) : undefined,
     },
   })
 

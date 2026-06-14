@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { CoachNav } from "@/components/coach-nav"
 import { BillingTabs } from "./tabs"
 
 export default async function BillingPage() {
@@ -56,11 +55,9 @@ export default async function BillingPage() {
   const totalGroupThisMonth = groupClasses.reduce((a, gc) => a + gc.sessions.length * gc.groupRate * gc.enrollments.length, 0)
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <CoachNav coachName={coach.name ?? "Coach"} />
-      <div className="max-w-5xl mx-auto px-6 py-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Billing & Hours</h1>
-        <p className="text-gray-500 text-sm mb-6">Track sessions, hours, and payments</p>
+    <div className="max-w-5xl mx-auto px-6 py-8">
+        <h1 className="text-2xl font-bold text-foreground mb-2">Billing & Hours</h1>
+        <p className="text-muted-foreground text-sm mb-6">Track sessions, hours, and payments</p>
 
         {/* Summary */}
         <div className="grid grid-cols-4 gap-4 mb-8">
@@ -70,14 +67,14 @@ export default async function BillingPage() {
             { label: "Group — This Month", value: `₹${totalGroupThisMonth.toLocaleString()}`, color: "teal" },
             { label: "Private Rate", value: `₹${(coach.hourlyRate ?? 500).toLocaleString()}/hr`, color: "gray" },
           ].map(s => (
-            <div key={s.label} className="bg-white rounded-xl border p-4">
-              <p className="text-xs text-gray-400 mb-1">{s.label}</p>
+            <div key={s.label} className="bg-card border border-border rounded-xl shadow-sm p-4">
+              <p className="text-xs text-muted-foreground mb-1">{s.label}</p>
               <p className={`text-xl font-bold ${
                 s.color === "blue" ? "text-blue-600" :
                 s.color === "orange" ? "text-amber-600" :
                 s.color === "teal" ? "text-teal-600" :
                 s.color === "green" ? "text-green-600" :
-                "text-gray-700"
+                "text-foreground"
               }`}>{s.value}</p>
             </div>
           ))}
@@ -108,7 +105,6 @@ export default async function BillingPage() {
           }))}
           currentMonth={monthStart.toISOString()}
         />
-      </div>
     </div>
   )
 }

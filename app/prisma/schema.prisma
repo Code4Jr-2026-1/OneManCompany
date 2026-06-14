@@ -70,6 +70,7 @@ model Student {
   skillLevel String   @default("beginner")
   goals      String?
   notes      String?
+  phone      String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -130,6 +131,7 @@ model ScheduledSession {
   duration    Int      @default(60)
   status      String   @default("PENDING")
   notes       String?
+  meetingLink String?
   createdAt   DateTime @default(now())
   student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
@@ -239,19 +241,21 @@ model Message {
 }
 
 model GroupClass {
-  id          String   @id @default(cuid())
-  coachId     String
-  name        String
-  description String?
-  skillLevel  String   @default("all")
-  capacity    Int      @default(10)
-  dayOfWeek   Int
-  startTime   String
-  duration    Int      @default(60)
-  groupRate   Float    @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                String   @id @default(cuid())
+  coachId           String
+  name              String
+  description       String?
+  skillLevel        String   @default("all")
+  capacity          Int      @default(10)
+  dayOfWeek         Int
+  startTime         String
+  duration          Int      @default(60)
+  groupRate         Float    @default(0)
+  isActive          Boolean  @default(true)
+  meetingLink       String?
+  whatsappGroupLink String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   coach       User               @relation(fields: [coachId], references: [id], onDelete: Cascade)
   enrollments GroupEnrollment[]

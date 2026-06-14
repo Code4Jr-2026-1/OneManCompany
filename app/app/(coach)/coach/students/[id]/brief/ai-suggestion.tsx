@@ -19,5 +19,5 @@ export function AiSuggestion({ studentName, skillLevel, context, weakestTopic, n
 
   if (loading) return <div className="flex gap-1">{[0,1,2].map(i => <div key={i} className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: `${i*0.15}s` }} />)}</div>
 
-  return <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{suggestion}</p>
+  return <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{suggestion}</p>
 }

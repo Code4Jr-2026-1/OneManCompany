@@ -17,7 +17,7 @@ export async function POST(req: Request) {
       temperature: 0.5,
       messages: [{
         role: "user",
-        content: `You are helping a chess coach prepare for their next session with ${studentName} (${skillLevel} player).
+        content: `You are a ChessMate AI assistant helping a chess coach prepare for their next session with ${studentName} (${skillLevel} player).
 
 Student context: ${context || "Limited context available"}
 Weakest topic: ${weakestTopic || "Unknown"}

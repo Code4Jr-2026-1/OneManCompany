@@ -12,6 +12,7 @@ export async function POST(req: Request) {
       goals: body.goals,
       weakness: body.weakness || null,
       notes: body.notes,
+      phone: body.phone || null,
       coachId: body.coachId,
     },
   })
