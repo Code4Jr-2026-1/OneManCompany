@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import { SignOutButton } from "@/components/sign-out-button"
 import { PayUpiButton } from "@/components/pay-upi-button"
 import { monthBounds, privateAmount, groupAmount } from "@/lib/billing"
+import { buildUpcomingItems } from "@/lib/schedule"
 
 export default async function ParentPortal() {
   const session = await auth()
@@ -20,8 +21,12 @@ export default async function ParentPortal() {
       coachSessions: { select: { duration: true, date: true } },
       groupEnrollments: { where: { status: "ACTIVE" }, include: { groupClass: true } },
       billingEntries: { include: { groupClass: { select: { name: true } } }, orderBy: { month: "desc" } },
+      scheduledSessions: { where: { scheduledAt: { gte: new Date() } }, orderBy: { scheduledAt: "asc" }, take: 5 },
     },
   }) : []
+
+  const fmtDay = (d: Date) => new Date(d).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })
+  const fmtTime = (d: Date) => new Date(d).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
 
   const { monthStart, nextMonth } = monthBounds(new Date())
 
@@ -143,6 +148,43 @@ export default async function ParentPortal() {
                     </div>
                   )}
                 </div>
+
+                {/* Upcoming sessions */}
+                {(() => {
+                  const upcoming = buildUpcomingItems({
+                    scheduledSessions: child.scheduledSessions,
+                    groupClasses: child.groupEnrollments.map(e => e.groupClass),
+                  }).slice(0, 3)
+                  if (upcoming.length === 0) return null
+                  return (
+                    <div className="px-6 pb-6">
+                      <h3 className="font-semibold text-gray-900 mb-3">Upcoming Sessions</h3>
+                      <div className="space-y-2">
+                        {upcoming.map((item, i) => {
+                          const isToday = item.date.toDateString() === new Date().toDateString()
+                          return (
+                            <div key={i} className="flex items-center gap-3 bg-gray-50 rounded-lg p-3">
+                              <div className="w-24 text-xs text-gray-500 flex-shrink-0">
+                                <div>{isToday ? "Today" : fmtDay(item.date)}</div>
+                                <div className="font-medium text-gray-700">{fmtTime(item.date)}</div>
+                              </div>
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${item.kind === "group" ? "bg-teal-100 text-teal-700" : "bg-blue-100 text-blue-700"}`}>
+                                {item.kind === "group" ? "Group" : "Private"}
+                              </span>
+                              <span className="text-sm text-gray-700 flex-1">{item.kind === "group" ? item.name : "Private Lesson"} · {item.duration} min</span>
+                              {item.meetingLink && (
+                                <a href={item.meetingLink} target="_blank" rel="noopener noreferrer"
+                                  className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700">
+                                  Join →
+                                </a>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })()}
 
                 {/* Billing */}
                 {(() => {

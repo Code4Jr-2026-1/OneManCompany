@@ -5,6 +5,7 @@ import Link from "next/link"
 import { SignOutButton } from "@/components/sign-out-button"
 import { HomeworkToggle } from "./homework-toggle"
 import { MilestoneToggle } from "./milestone-toggle"
+import { buildUpcomingItems } from "@/lib/schedule"
 
 export default async function StudentPortal() {
   const session = await auth()
@@ -18,7 +19,8 @@ export default async function StudentPortal() {
       snapshots: { orderBy: { month: "desc" }, take: 1 },
       plans: { where: { isActive: true }, take: 1 },
       homeworkAssignments: { where: { status: "PENDING" }, orderBy: { dueDate: "asc" } },
-      scheduledSessions: { where: { scheduledAt: { gte: new Date() } }, orderBy: { scheduledAt: "asc" }, take: 1 },
+      scheduledSessions: { where: { scheduledAt: { gte: new Date() } }, orderBy: { scheduledAt: "asc" }, take: 5 },
+      groupEnrollments: { where: { status: "ACTIVE" }, include: { groupClass: true } },
     },
   }) : null
 
@@ -26,7 +28,15 @@ export default async function StudentPortal() {
   const plan = student?.plans[0]
   const milestones: { title: string; done: boolean }[] = plan ? JSON.parse(plan.milestones) : []
   const doneMilestones = milestones.filter(m => m.done).length
-  const nextSession = student?.scheduledSessions[0]
+
+  const upcoming = student ? buildUpcomingItems({
+    scheduledSessions: student.scheduledSessions,
+    groupClasses: student.groupEnrollments.map(e => e.groupClass),
+  }).slice(0, 5) : []
+  const nextSession = upcoming[0]
+
+  const fmtDay = (d: Date) => new Date(d).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })
+  const fmtTime = (d: Date) => new Date(d).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
 
   return (
     <div className="min-h-screen bg-slate-900 text-white">
@@ -45,7 +55,7 @@ export default async function StudentPortal() {
         <h1 className="text-2xl font-bold mb-1">Welcome, {user?.name?.split(" ")[0]} ♟</h1>
         <p className="text-slate-400 mb-8 text-sm">
           {student ? `${student.skillLevel} · Rating ${student.rating}` : "No student profile yet."}
-          {nextSession ? ` · Next session ${new Date(nextSession.scheduledAt).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })}` : ""}
+          {nextSession ? ` · Next session ${fmtDay(nextSession.date)}` : ""}
         </p>
 
         {/* Quick actions */}
@@ -64,6 +74,39 @@ export default async function StudentPortal() {
             </Link>
           ))}
         </div>
+
+        {/* Upcoming sessions */}
+        {upcoming.length > 0 && (
+          <div className="bg-white/5 border border-white/10 rounded-xl p-5 mb-4">
+            <h3 className="font-semibold mb-4">📅 Upcoming Sessions</h3>
+            <div className="space-y-3">
+              {upcoming.map((item, i) => {
+                const isToday = item.date.toDateString() === new Date().toDateString()
+                return (
+                  <div key={i} className="flex items-center gap-4">
+                    <div className="w-24 text-xs text-slate-400 flex-shrink-0">
+                      <div>{isToday ? "Today" : fmtDay(item.date)}</div>
+                      <div className="font-medium text-slate-300">{fmtTime(item.date)}</div>
+                    </div>
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm flex-shrink-0 ${item.kind === "group" ? "bg-teal-500/20 text-teal-300" : "bg-blue-500/20 text-blue-300"}`}>
+                      {item.kind === "group" ? "👥" : "♟"}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{item.kind === "group" ? item.name : "Private Lesson"}</p>
+                      <p className="text-xs text-slate-400">{item.duration} min</p>
+                    </div>
+                    {item.meetingLink && (
+                      <a href={item.meetingLink} target="_blank" rel="noopener noreferrer"
+                        className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 flex-shrink-0">
+                        Join →
+                      </a>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4">
           {/* Homework */}
