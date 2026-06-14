@@ -44,7 +44,7 @@ export function MentorChat({ studentId, studentName, context, rating, skillLevel
               <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm mr-3 mt-1 flex-shrink-0">♟</div>
             )}
             <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
-              m.role === "user" ? "bg-blue-600 text-white" : "bg-white/10 text-white border border-white/10"
+              m.role === "user" ? "bg-blue-600 text-white" : "bg-card text-foreground border border-border"
             }`}>
               {m.content}
             </div>
@@ -53,7 +53,7 @@ export function MentorChat({ studentId, studentName, context, rating, skillLevel
         {loading && (
           <div className="flex justify-start">
             <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm mr-3 flex-shrink-0">♟</div>
-            <div className="bg-white/10 border border-white/10 rounded-2xl px-4 py-3">
+            <div className="bg-card border border-border rounded-2xl px-4 py-3">
               <div className="flex gap-1">
                 {[0,1,2].map(i => <div key={i} className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />)}
               </div>
@@ -63,21 +63,21 @@ export function MentorChat({ studentId, studentName, context, rating, skillLevel
         <div ref={bottomRef} />
       </div>
 
-      <div className="border-t border-white/10 pt-4">
+      <div className="border-t border-border pt-4">
         <div className="flex gap-3">
           <input
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), send())}
             placeholder="Ask your chess mentor anything…"
-            className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            className="flex-1 bg-card border border-border rounded-xl px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
           />
           <button onClick={send} disabled={loading || !input.trim()}
             className="bg-blue-600 hover:bg-blue-700 text-white px-5 rounded-xl font-medium transition-colors disabled:opacity-50 text-sm">
             Send
           </button>
         </div>
-        <p className="text-xs text-slate-600 mt-2 text-center">
+        <p className="text-xs text-muted-foreground mt-2 text-center">
           {studentId ? "Your mentor remembers your history and progress" : "Connect with your coach to unlock personalised mentoring"}
         </p>
       </div>

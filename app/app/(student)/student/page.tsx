@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { SignOutButton } from "@/components/sign-out-button"
+import { PortalNav } from "@/components/portal-nav"
 import { HomeworkToggle } from "./homework-toggle"
 import { MilestoneToggle } from "./milestone-toggle"
 import { buildUpcomingItems } from "@/lib/schedule"
@@ -39,21 +39,12 @@ export default async function StudentPortal() {
   const fmtTime = (d: Date) => new Date(d).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
-      <nav className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-sm font-bold">♟</div>
-          <span className="font-semibold">My Chess Portal</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-slate-400 text-sm">{user?.name}</span>
-          <SignOutButton />
-        </div>
-      </nav>
+    <div className="min-h-screen bg-background">
+      <PortalNav title="My Chess Portal" userName={user?.name} />
 
       <div className="max-w-5xl mx-auto px-6 py-8">
-        <h1 className="text-2xl font-bold mb-1">Welcome, {user?.name?.split(" ")[0]} ♟</h1>
-        <p className="text-slate-400 mb-8 text-sm">
+        <h1 className="text-2xl font-bold text-foreground mb-1">Welcome, {user?.name?.split(" ")[0]} ♟</h1>
+        <p className="text-muted-foreground mb-8 text-sm">
           {student ? `${student.skillLevel} · Rating ${student.rating}` : "No student profile yet."}
           {nextSession ? ` · Next session ${fmtDay(nextSession.date)}` : ""}
         </p>
@@ -77,23 +68,23 @@ export default async function StudentPortal() {
 
         {/* Upcoming sessions */}
         {upcoming.length > 0 && (
-          <div className="bg-white/5 border border-white/10 rounded-xl p-5 mb-4">
-            <h3 className="font-semibold mb-4">📅 Upcoming Sessions</h3>
+          <div className="bg-card border border-border shadow-sm rounded-xl p-5 mb-4">
+            <h3 className="font-semibold text-foreground mb-4">📅 Upcoming Sessions</h3>
             <div className="space-y-3">
               {upcoming.map((item, i) => {
                 const isToday = item.date.toDateString() === new Date().toDateString()
                 return (
                   <div key={i} className="flex items-center gap-4">
-                    <div className="w-24 text-xs text-slate-400 flex-shrink-0">
+                    <div className="w-24 text-xs text-muted-foreground flex-shrink-0">
                       <div>{isToday ? "Today" : fmtDay(item.date)}</div>
-                      <div className="font-medium text-slate-300">{fmtTime(item.date)}</div>
+                      <div className="font-medium text-foreground">{fmtTime(item.date)}</div>
                     </div>
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm flex-shrink-0 ${item.kind === "group" ? "bg-teal-500/20 text-teal-300" : "bg-blue-500/20 text-blue-300"}`}>
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm flex-shrink-0 ${item.kind === "group" ? "bg-teal-100 text-teal-700" : "bg-blue-100 text-blue-700"}`}>
                       {item.kind === "group" ? "👥" : "♟"}
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium">{item.kind === "group" ? item.name : "Private Lesson"}</p>
-                      <p className="text-xs text-slate-400">{item.duration} min</p>
+                      <p className="text-sm font-medium text-foreground">{item.kind === "group" ? item.name : "Private Lesson"}</p>
+                      <p className="text-xs text-muted-foreground">{item.duration} min</p>
                     </div>
                     {item.meetingLink && (
                       <a href={item.meetingLink} target="_blank" rel="noopener noreferrer"
@@ -111,16 +102,16 @@ export default async function StudentPortal() {
         <div className="grid grid-cols-2 gap-4">
           {/* Homework */}
           {student && student.homeworkAssignments.length > 0 && (
-            <div className="bg-white/5 border border-white/10 rounded-xl p-5">
-              <h3 className="font-semibold mb-4">📝 Pending Homework</h3>
+            <div className="bg-card border border-border shadow-sm rounded-xl p-5">
+              <h3 className="font-semibold text-foreground mb-4">📝 Pending Homework</h3>
               <div className="space-y-3">
                 {student.homeworkAssignments.map(hw => (
                   <div key={hw.id} className="flex items-start gap-3">
                     <HomeworkToggle hwId={hw.id} />
                     <div>
-                      <p className="text-sm font-medium">{hw.title}</p>
-                      {hw.description && <p className="text-xs text-slate-400 mt-0.5">{hw.description}</p>}
-                      {hw.dueDate && <p className="text-xs text-slate-500">Due {new Date(hw.dueDate).toLocaleDateString()}</p>}
+                      <p className="text-sm font-medium text-foreground">{hw.title}</p>
+                      {hw.description && <p className="text-xs text-muted-foreground mt-0.5">{hw.description}</p>}
+                      {hw.dueDate && <p className="text-xs text-muted-foreground">Due {new Date(hw.dueDate).toLocaleDateString()}</p>}
                     </div>
                   </div>
                 ))}
@@ -130,31 +121,31 @@ export default async function StudentPortal() {
 
           {/* Stats */}
           {snapshot && (
-            <div className="bg-white/5 border border-white/10 rounded-xl p-5">
-              <h3 className="font-semibold mb-4">This Month</h3>
+            <div className="bg-card border border-border shadow-sm rounded-xl p-5">
+              <h3 className="font-semibold text-foreground mb-4">This Month</h3>
               <div className="grid grid-cols-2 gap-4">
-                <div><p className="text-2xl font-bold">{student?.rating}</p><p className="text-slate-400 text-sm">Rating</p></div>
-                <div><p className="text-2xl font-bold">{snapshot.sessionCount}</p><p className="text-slate-400 text-sm">Sessions</p></div>
-                <div><p className="text-2xl font-bold text-green-400">+{Math.round(snapshot.improvementRate)}%</p><p className="text-slate-400 text-sm">Improvement</p></div>
+                <div><p className="text-2xl font-bold text-foreground">{student?.rating}</p><p className="text-muted-foreground text-sm">Rating</p></div>
+                <div><p className="text-2xl font-bold text-foreground">{snapshot.sessionCount}</p><p className="text-muted-foreground text-sm">Sessions</p></div>
+                <div><p className="text-2xl font-bold text-green-600">+{Math.round(snapshot.improvementRate)}%</p><p className="text-muted-foreground text-sm">Improvement</p></div>
               </div>
             </div>
           )}
 
           {/* Improvement plan */}
           {plan && milestones.length > 0 && (
-            <div className="bg-white/5 border border-white/10 rounded-xl p-5">
-              <h3 className="font-semibold mb-3">Improvement Plan</h3>
-              <div className="flex justify-between text-sm text-slate-400 mb-2">
+            <div className="bg-card border border-border shadow-sm rounded-xl p-5">
+              <h3 className="font-semibold text-foreground mb-3">Improvement Plan</h3>
+              <div className="flex justify-between text-sm text-muted-foreground mb-2">
                 <span>Milestones</span><span>{doneMilestones}/{milestones.length}</span>
               </div>
-              <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-4">
+              <div className="h-2 bg-secondary rounded-full overflow-hidden mb-4">
                 <div className="h-full bg-green-500 rounded-full" style={{ width: `${milestones.length ? doneMilestones / milestones.length * 100 : 0}%` }} />
               </div>
               <div className="space-y-2">
                 {milestones.map((m, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <MilestoneToggle planId={plan.id} index={i} done={m.done} milestones={milestones} />
-                    <span className={`text-sm ${m.done ? "text-green-400 line-through" : "text-slate-300"}`}>{m.title}</span>
+                    <span className={`text-sm ${m.done ? "text-green-600 line-through" : "text-foreground"}`}>{m.title}</span>
                   </div>
                 ))}
               </div>
@@ -163,9 +154,9 @@ export default async function StudentPortal() {
 
           {/* AI context */}
           {student?.context && (
-            <div className="bg-gradient-to-r from-blue-900/40 to-purple-900/40 border border-blue-500/20 rounded-xl p-5">
-              <p className="text-xs text-blue-400 mb-2">✦ Your mentor knows you</p>
-              <p className="text-sm text-slate-300 leading-relaxed">{student.context.contextSummary}</p>
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-100 rounded-xl p-5">
+              <p className="text-xs text-blue-600 mb-2 font-medium">✦ Your mentor knows you</p>
+              <p className="text-sm text-foreground leading-relaxed">{student.context.contextSummary}</p>
             </div>
           )}
         </div>

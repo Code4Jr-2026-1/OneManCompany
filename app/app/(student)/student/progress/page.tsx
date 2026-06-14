@@ -16,19 +16,19 @@ export default async function ProgressPage() {
   const latestTopics: Record<string, number> = snapshots.length ? JSON.parse(snapshots.at(-1)!.topicMastery) : {}
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
-      <nav className="border-b border-white/10 px-6 py-4 flex items-center gap-4">
-        <a href="/student" className="text-slate-400 hover:text-white text-sm">← Back</a>
-        <span className="font-semibold">My Progress</span>
+    <div className="min-h-screen bg-background">
+      <nav className="bg-card border-b border-border px-6 py-4 flex items-center gap-4">
+        <a href="/student" className="text-muted-foreground hover:text-foreground text-sm">← Back</a>
+        <span className="font-semibold text-foreground">My Progress</span>
       </nav>
       <div className="max-w-4xl mx-auto px-6 py-8">
-        <h1 className="text-2xl font-bold mb-8">Progress Tracker</h1>
+        <h1 className="text-2xl font-bold text-foreground mb-8">Progress Tracker</h1>
 
         {/* Rating history */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-5 mb-6">
-          <h2 className="font-semibold mb-4">Rating History</h2>
+        <div className="bg-card border border-border shadow-sm rounded-xl p-5 mb-6">
+          <h2 className="font-semibold text-foreground mb-4">Rating History</h2>
           {snapshots.length < 2 ? (
-            <p className="text-slate-400 text-sm">Not enough data yet. Keep playing and logging sessions!</p>
+            <p className="text-muted-foreground text-sm">Not enough data yet. Keep playing and logging sessions!</p>
           ) : (
             <div className="flex items-end gap-3 h-32">
               {snapshots.map((s, i) => {
@@ -37,9 +37,9 @@ export default async function ProgressPage() {
                 const h = max === min ? 50 : Math.round(((s.rating - min) / (max - min)) * 80) + 20
                 return (
                   <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                    <span className="text-xs text-slate-400">{s.rating}</span>
+                    <span className="text-xs text-muted-foreground">{s.rating}</span>
                     <div className="w-full bg-blue-500 rounded-t" style={{ height: `${h}%` }} />
-                    <span className="text-xs text-slate-500">{new Date(s.month).toLocaleDateString("en", { month: "short" })}</span>
+                    <span className="text-xs text-muted-foreground">{new Date(s.month).toLocaleDateString("en", { month: "short" })}</span>
                   </div>
                 )
               })}
@@ -49,16 +49,16 @@ export default async function ProgressPage() {
 
         {/* Topic mastery */}
         {Object.keys(latestTopics).length > 0 && (
-          <div className="bg-white/5 border border-white/10 rounded-xl p-5 mb-6">
-            <h2 className="font-semibold mb-4">Topic Mastery</h2>
+          <div className="bg-card border border-border shadow-sm rounded-xl p-5 mb-6">
+            <h2 className="font-semibold text-foreground mb-4">Topic Mastery</h2>
             <div className="space-y-4">
               {Object.entries(latestTopics).map(([topic, score]) => (
                 <div key={topic}>
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="capitalize text-slate-300">{topic}</span>
-                    <span className="text-slate-400">{score}%</span>
+                    <span className="capitalize text-foreground">{topic}</span>
+                    <span className="text-muted-foreground">{score}%</span>
                   </div>
-                  <div className="h-3 bg-white/10 rounded-full overflow-hidden">
+                  <div className="h-3 bg-secondary rounded-full overflow-hidden">
                     <div className={`h-full rounded-full ${score >= 70 ? "bg-green-500" : score >= 50 ? "bg-blue-500" : "bg-yellow-500"}`}
                       style={{ width: `${score}%` }} />
                   </div>
@@ -76,9 +76,9 @@ export default async function ProgressPage() {
               { label: "Total Sessions", value: snapshots.reduce((a, s) => a + s.sessionCount, 0) },
               { label: "Avg Improvement", value: `${Math.round(snapshots.reduce((a, s) => a + s.improvementRate, 0) / snapshots.length)}%` },
             ].map(s => (
-              <div key={s.label} className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-                <p className="text-2xl font-bold text-white">{s.value}</p>
-                <p className="text-slate-400 text-sm mt-1">{s.label}</p>
+              <div key={s.label} className="bg-card border border-border shadow-sm rounded-xl p-4 text-center">
+                <p className="text-2xl font-bold text-foreground">{s.value}</p>
+                <p className="text-muted-foreground text-sm mt-1">{s.label}</p>
               </div>
             ))}
           </div>

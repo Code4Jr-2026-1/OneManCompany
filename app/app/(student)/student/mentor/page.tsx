@@ -14,11 +14,11 @@ export default async function MentorPage() {
   }) : null
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col">
-      <nav className="border-b border-white/10 px-6 py-4 flex items-center gap-4">
-        <a href="/student" className="text-slate-400 hover:text-white text-sm">← Back</a>
-        <span className="text-white font-semibold">AI Chess Mentor</span>
-        <span className="text-xs bg-blue-600/30 text-blue-300 px-2 py-0.5 rounded-full">Personalised to you</span>
+    <div className="min-h-screen bg-background flex flex-col">
+      <nav className="bg-card border-b border-border px-6 py-4 flex items-center gap-4">
+        <a href="/student" className="text-muted-foreground hover:text-foreground text-sm">← Back</a>
+        <span className="text-foreground font-semibold">AI Chess Mentor</span>
+        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Personalised to you</span>
       </nav>
       <MentorChat
         studentId={student?.id ?? null}
