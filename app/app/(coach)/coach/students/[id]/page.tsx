@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma"
 import { redirect, notFound } from "next/navigation"
 import Link from "next/link"
 import { PhoneEditor } from "./phone-editor"
+import { AiSuggestion } from "./ai-suggestion"
+import { AiSummary } from "./ai-summary"
+import { MonthlyAttendance } from "./monthly-attendance"
 
 export default async function StudentDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -13,11 +16,12 @@ export default async function StudentDetail({ params }: { params: Promise<{ id: 
     where: { id },
     include: {
       context: true,
-      coachSessions: { orderBy: { date: "desc" }, take: 5 },
+      coachSessions: { orderBy: { date: "desc" } },
       gameAnalyses: { orderBy: { createdAt: "desc" }, take: 5 },
       snapshots: { orderBy: { month: "desc" }, take: 3 },
       plans: { where: { isActive: true }, take: 1 },
       homeworkAssignments: { orderBy: { createdAt: "desc" }, take: 5 },
+      billingEntries: true,
     },
   })
   if (!student) notFound()
@@ -26,6 +30,30 @@ export default async function StudentDetail({ params }: { params: Promise<{ id: 
   const milestones: { title: string; done: boolean }[] = plan ? JSON.parse(plan.milestones) : []
   const topics: string[] = plan ? JSON.parse(plan.topics) : []
   const topicMastery: Record<string, number> = student.snapshots[0] ? JSON.parse(student.snapshots[0].topicMastery) : {}
+  const weakestTopic = Object.entries(topicMastery).sort((a, b) => a[1] - b[1])[0]
+  const ratingChange = student.snapshots[0] && student.snapshots[1]
+    ? student.snapshots[0].rating - student.snapshots[1].rating : 0
+
+  const lastSession = student.coachSessions[0]
+  const nextTopic = topics[0] ?? null
+
+  // Monthly attendance: last 6 months including current
+  const now = new Date()
+  const months = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+    const sessions = student.coachSessions
+      .filter(s => {
+        const sd = new Date(s.date)
+        return sd.getFullYear() === d.getFullYear() && sd.getMonth() === d.getMonth()
+      })
+      .map(s => ({ id: s.id, date: s.date.toISOString(), duration: s.duration, topicsCovered: s.topicsCovered, coachNotes: s.coachNotes, aiSummary: s.aiSummary, homeworkSet: s.homeworkSet }))
+    return { key, label: d.toLocaleDateString("en-IN", { month: "short" }), count: sessions.length, sessions }
+  })
+
+  const pendingAmount = student.billingEntries.filter(e => !e.paid).reduce((a, e) => a + e.amount, 0)
+  const homeworkDone = student.homeworkAssignments.filter(h => h.status === "DONE").length
+  const homeworkTotal = student.homeworkAssignments.length
 
   return (
     <div className="min-h-screen bg-background">
@@ -34,9 +62,6 @@ export default async function StudentDetail({ params }: { params: Promise<{ id: 
         <span className="text-muted-foreground">/</span>
         <span className="font-semibold text-foreground">{student.name}</span>
         <div className="ml-auto flex gap-2">
-          <Link href={`/coach/students/${id}/brief`}>
-            <button className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-700">📋 Brief</button>
-          </Link>
           <Link href={`/coach/students/${id}/end-session`}>
             <button className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-700">✓ End Session</button>
           </Link>
@@ -53,8 +78,10 @@ export default async function StudentDetail({ params }: { params: Promise<{ id: 
             <h2 className="text-lg font-bold text-foreground text-center">{student.name}</h2>
             <p className="text-sm text-muted-foreground text-center capitalize">{student.skillLevel}</p>
             <div className="mt-4 space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">Rating</span><span className="font-semibold">{student.rating}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Rating</span><span className="font-semibold">{student.rating} {ratingChange !== 0 && <span className={ratingChange > 0 ? "text-green-600" : "text-red-600"}>({ratingChange >= 0 ? "+" : ""}{ratingChange})</span>}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Age</span><span className="font-semibold">{student.age ?? "—"}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Sessions completed</span><span className="font-semibold">{student.coachSessions.length}</span></div>
+              {lastSession && <div className="flex justify-between"><span className="text-muted-foreground">Last session</span><span className="font-semibold">{new Date(lastSession.date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span></div>}
               <div className="flex justify-between items-center"><span className="text-muted-foreground">WhatsApp</span><PhoneEditor studentId={student.id} phone={student.phone} /></div>
             </div>
             {student.goals && <div className="mt-4 p-3 bg-blue-50 rounded-lg"><p className="text-xs text-muted-foreground mb-1">Goals</p><p className="text-sm text-foreground">{student.goals}</p></div>}
@@ -85,10 +112,40 @@ export default async function StudentDetail({ params }: { params: Promise<{ id: 
               </div>
             </div>
           )}
+
+          {/* Payment status */}
+          <div className="bg-card border border-border rounded-xl shadow-sm p-5">
+            <h3 className="font-semibold text-foreground mb-3">Payment Status</h3>
+            <div className="flex items-end justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Pending</p>
+                <p className={`text-2xl font-bold ${pendingAmount > 0 ? "text-amber-600" : "text-green-600"}`}>₹{pendingAmount.toLocaleString()}</p>
+              </div>
+              <Link href={`/coach/billing/${student.id}`} className="text-sm text-blue-600 hover:underline">View Billing →</Link>
+            </div>
+          </div>
         </div>
 
-        {/* Right: sessions, plan, analyses, homework */}
+        {/* Right: AI summary, plan, sessions, homework */}
         <div className="col-span-2 space-y-4">
+          {/* AI Summary & Suggested Plan */}
+          <div className="bg-card border border-border rounded-xl shadow-sm p-5">
+            <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2"><span className="text-purple-600">✦</span> AI Progress Summary & Suggested Plan</h3>
+            <AiSummary
+              studentName={student.name}
+              skillLevel={student.skillLevel}
+              rating={student.rating}
+              ratingChange={ratingChange}
+              context={student.context?.contextSummary ?? ""}
+              topicMastery={topicMastery}
+              planTopics={topics}
+              recentSessions={student.coachSessions.slice(0, 5).map(s => ({ date: s.date.toISOString(), topicsCovered: s.topicsCovered, aiSummary: s.aiSummary }))}
+              homeworkDone={homeworkDone}
+              homeworkTotal={homeworkTotal}
+              totalSessions={student.coachSessions.length}
+            />
+          </div>
+
           {plan && (
             <div className="bg-card border border-border rounded-xl shadow-sm p-5">
               <h3 className="font-semibold text-foreground mb-3">Active Improvement Plan</h3>
@@ -108,6 +165,44 @@ export default async function StudentDetail({ params }: { params: Promise<{ id: 
               </div>
             </div>
           )}
+
+          {/* Last session + next session AI plan */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-card border border-border rounded-xl shadow-sm p-5">
+              <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2"><span className="text-blue-600">📖</span> Last Session</h3>
+              {lastSession ? (
+                <div className="space-y-2 text-sm">
+                  <p className="text-muted-foreground text-xs">{new Date(lastSession.date).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })}</p>
+                  {lastSession.topicsCovered && <p className="text-foreground"><span className="font-medium">Covered:</span> {lastSession.topicsCovered}</p>}
+                  {lastSession.coachNotes && <p className="text-foreground">{lastSession.coachNotes}</p>}
+                  {lastSession.homeworkSet && (
+                    <div className="mt-2 p-2 bg-orange-50 rounded-lg">
+                      <p className="text-xs font-medium text-orange-700">Homework set:</p>
+                      <p className="text-xs text-orange-600">{lastSession.homeworkSet}</p>
+                    </div>
+                  )}
+                </div>
+              ) : <p className="text-sm text-muted-foreground">No previous sessions recorded.</p>}
+            </div>
+
+            <div className="bg-card border border-border rounded-xl shadow-sm p-5">
+              <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2"><span className="text-purple-600">✦</span> Next Session Plan</h3>
+              <AiSuggestion
+                studentName={student.name}
+                skillLevel={student.skillLevel}
+                context={student.context?.contextSummary ?? ""}
+                weakestTopic={weakestTopic ? weakestTopic[0] : null}
+                nextPlanTopic={nextTopic}
+                lastSessionTopic={lastSession?.topicsCovered ?? null}
+              />
+            </div>
+          </div>
+
+          {/* Monthly attendance */}
+          <div className="bg-card border border-border rounded-xl shadow-sm p-5">
+            <h3 className="font-semibold text-foreground mb-3">Monthly Attendance</h3>
+            <MonthlyAttendance months={months} totalSessions={student.coachSessions.length} />
+          </div>
 
           {/* Homework */}
           <div className="bg-card border border-border rounded-xl shadow-sm p-5">
@@ -139,7 +234,7 @@ export default async function StudentDetail({ params }: { params: Promise<{ id: 
               <p className="text-sm text-muted-foreground">No sessions recorded yet.</p>
             ) : (
               <div className="space-y-3">
-                {student.coachSessions.map(s => {
+                {student.coachSessions.slice(0, 5).map(s => {
                   let analysis: Record<string, unknown> | null = null
                   try { if (s.aiAnalysis) analysis = JSON.parse(s.aiAnalysis) } catch { /* ignore */ }
                   return (

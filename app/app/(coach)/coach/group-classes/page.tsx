@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import Link from "next/link"
+import { ClassesTabs } from "@/components/classes-tabs"
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
@@ -23,11 +24,14 @@ export default async function GroupClassesPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-foreground mb-1">Classes</h1>
+          <p className="text-muted-foreground text-sm mb-4">Manage your private and group sessions</p>
+          <ClassesTabs active="group" />
+        </div>
+
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Group Classes</h1>
-            <p className="text-muted-foreground text-sm mt-1">{classes.length} active group class{classes.length !== 1 ? "es" : ""}</p>
-          </div>
+          <p className="text-muted-foreground text-sm">{classes.length} active group class{classes.length !== 1 ? "es" : ""}</p>
           <Link href="/coach/group-classes/new">
             <button className="bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-teal-700">
               + New Group Class

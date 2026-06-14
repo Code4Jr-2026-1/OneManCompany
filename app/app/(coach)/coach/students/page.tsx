@@ -91,48 +91,48 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
             const initials = s.name.split(" ").map(n => n[0]).join("").slice(0,2)
             return (
               <div key={s.id} className={`grid grid-cols-12 gap-4 px-6 py-4 border-b last:border-0 items-center hover:bg-accent ${days >= 7 ? "bg-red-50/30" : ""}`}>
-                <div className="col-span-3 flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs flex-shrink-0">{initials}</div>
-                  <div>
-                    <p className="font-medium text-foreground text-sm">{s.name}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{s.skillLevel}</p>
+                <Link href={`/coach/students/${s.id}`} className="contents">
+                  <div className="col-span-3 flex items-center gap-3 cursor-pointer">
+                    <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs flex-shrink-0">{initials}</div>
+                    <div>
+                      <p className="font-medium text-foreground text-sm hover:underline">{s.name}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{s.skillLevel}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="col-span-1 text-center">
-                  <span className="font-semibold text-foreground">{s.rating}</span>
-                </div>
-                <div className="col-span-1 text-center">
-                  {t === "new" ? (
-                    <span className="text-muted-foreground text-sm" title="No monthly snapshots yet — trend will appear after first progress snapshot">✦ New</span>
-                  ) : t === "up" ? (
-                    <span className="text-green-600 font-semibold" title={`Rating improved by ${delta} points vs last month`}>
-                      ↑ <span className="text-xs">+{delta}</span>
+                  <div className="col-span-1 text-center cursor-pointer">
+                    <span className="font-semibold text-foreground">{s.rating}</span>
+                  </div>
+                  <div className="col-span-1 text-center cursor-pointer">
+                    {t === "new" ? (
+                      <span className="text-muted-foreground text-sm" title="No monthly snapshots yet — trend will appear after first progress snapshot">✦ New</span>
+                    ) : t === "up" ? (
+                      <span className="text-green-600 font-semibold" title={`Rating improved by ${delta} points vs last month`}>
+                        ↑ <span className="text-xs">+{delta}</span>
+                      </span>
+                    ) : t === "down" ? (
+                      <span className="text-red-500 font-semibold" title={`Rating dropped by ${Math.abs(delta)} points vs last month`}>
+                        ↓ <span className="text-xs">{delta}</span>
+                      </span>
+                    ) : (
+                      <span className="text-yellow-500 font-semibold" title="Rating unchanged vs last month">→ <span className="text-xs text-muted-foreground">±0</span></span>
+                    )}
+                  </div>
+                  <div className="col-span-2 text-center cursor-pointer">
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${!hw ? "bg-secondary text-muted-foreground" : "bg-orange-100 text-orange-700"}`}>
+                      {!hw ? "✓ Clear" : "⏳ Pending"}
                     </span>
-                  ) : t === "down" ? (
-                    <span className="text-red-500 font-semibold" title={`Rating dropped by ${Math.abs(delta)} points vs last month`}>
-                      ↓ <span className="text-xs">{delta}</span>
+                  </div>
+                  <div className="col-span-2 text-sm text-muted-foreground cursor-pointer">
+                    {next ? new Date(next.scheduledAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : <span className="text-muted-foreground">Not scheduled</span>}
+                  </div>
+                  <div className="col-span-1 text-center cursor-pointer">
+                    <span className={`text-xs font-semibold ${days >= 7 ? "text-red-600" : days >= 4 ? "text-amber-600" : "text-green-600"}`}>
+                      {days >= 999 ? "Never" : `${days}d`}
                     </span>
-                  ) : (
-                    <span className="text-yellow-500 font-semibold" title="Rating unchanged vs last month">→ <span className="text-xs text-muted-foreground">±0</span></span>
-                  )}
-                </div>
-                <div className="col-span-2 text-center">
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${!hw ? "bg-secondary text-muted-foreground" : "bg-orange-100 text-orange-700"}`}>
-                    {!hw ? "✓ Clear" : "⏳ Pending"}
-                  </span>
-                </div>
-                <div className="col-span-2 text-sm text-muted-foreground">
-                  {next ? new Date(next.scheduledAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : <span className="text-muted-foreground">Not scheduled</span>}
-                </div>
-                <div className="col-span-1 text-center">
-                  <span className={`text-xs font-semibold ${days >= 7 ? "text-red-600" : days >= 4 ? "text-amber-600" : "text-green-600"}`}>
-                    {days >= 999 ? "Never" : `${days}d`}
-                  </span>
-                </div>
+                  </div>
+                </Link>
                 <div className="col-span-2 flex gap-1.5 justify-end">
-                  <Link href={`/coach/students/${s.id}`}><button className="text-xs bg-secondary hover:bg-accent px-2.5 py-1.5 rounded text-foreground">View</button></Link>
-                  <Link href={`/coach/students/${s.id}/brief`}><button className="text-xs bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded text-blue-700">Brief</button></Link>
-                  <Link href={`/coach/students/${s.id}/end-session`}><button className="text-xs bg-green-50 hover:bg-green-100 px-2.5 py-1.5 rounded text-green-700">End</button></Link>
+                  <Link href={`/coach/students/${s.id}/end-session`}><button className="text-xs bg-green-50 hover:bg-green-100 px-2.5 py-1.5 rounded text-green-700">End Session</button></Link>
                 </div>
               </div>
             )

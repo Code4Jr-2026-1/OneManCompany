@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { QuickBookButton, QuickBookInline, LogSessionButton, AdHocLogButton } from "./actions"
+import { ClassesTabs } from "@/components/classes-tabs"
 
 function fmt(d: Date | string) {
   return new Date(d).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })
@@ -20,11 +21,22 @@ export default async function PersonalClassesPage() {
 
   const now = new Date()
 
-  const students = await prisma.student.findMany({
+  const studentRows = await prisma.student.findMany({
     where: { coachId: coach.id },
-    select: { id: true, name: true, skillLevel: true },
+    select: {
+      id: true, name: true, skillLevel: true, phone: true,
+      user: { select: { email: true } },
+      parent: { select: { email: true } },
+    },
     orderBy: { name: "asc" },
   })
+  const students = studentRows.map(s => ({
+    id: s.id,
+    name: s.name,
+    skillLevel: s.skillLevel,
+    phone: s.phone,
+    emails: [s.user?.email, s.parent?.email].filter((e): e is string => !!e),
+  }))
   const studentIds = students.map(s => s.id)
 
   const [upcoming, recent] = await Promise.all([
@@ -44,11 +56,14 @@ export default async function PersonalClassesPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-foreground mb-1">Classes</h1>
+          <p className="text-muted-foreground text-sm mb-4">Manage your private and group sessions</p>
+          <ClassesTabs active="personal" />
+        </div>
+
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Personal Classes</h1>
-            <p className="text-muted-foreground text-sm mt-1">1-on-1 private sessions with your students</p>
-          </div>
+          <p className="text-muted-foreground text-sm">1-on-1 private sessions with your students</p>
           <QuickBookButton students={students} />
         </div>
 
@@ -81,8 +96,8 @@ export default async function PersonalClassesPage() {
                         <p className="text-xs text-muted-foreground capitalize">{ss.student.skillLevel} · {ss.duration} min</p>
                       </div>
                       <div className="flex gap-2 flex-shrink-0">
-                        <Link href={`/coach/students/${ss.student.id}/brief`}>
-                          <button className="text-xs bg-blue-600 text-white px-2.5 py-1.5 rounded-lg hover:bg-blue-700">Brief</button>
+                        <Link href={`/coach/students/${ss.student.id}`}>
+                          <button className="text-xs bg-blue-600 text-white px-2.5 py-1.5 rounded-lg hover:bg-blue-700">Profile</button>
                         </Link>
                         <LogSessionButton
                           sessionId={ss.id}

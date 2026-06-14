@@ -21,9 +21,19 @@ export async function POST(req: Request) {
   const snapshot = student.snapshots[0]
   const prevSnapshot = student.snapshots[1]
   const ratingChange = snapshot && prevSnapshot ? snapshot.rating - prevSnapshot.rating : 0
+  const ratingTrend = !prevSnapshot ? "Not enough data yet" : ratingChange > 0 ? "Improving" : ratingChange < 0 ? "Declining" : "Steady"
   const recentSessions = student.coachSessions
   const pendingHw = student.homeworkAssignments.filter(h => h.status === "PENDING")
   const completedHw = student.homeworkAssignments.filter(h => h.status === "DONE")
+  const totalHw = pendingHw.length + completedHw.length
+  const hwCompletionRate = totalHw > 0 ? Math.round((completedHw.length / totalHw) * 100) : null
+
+  const sessionsThisMonth = snapshot?.sessionCount ?? recentSessions.length
+  const sessionsLastMonth = prevSnapshot?.sessionCount ?? null
+  const attendanceTrend = sessionsLastMonth === null ? "Not enough data yet"
+    : sessionsThisMonth > sessionsLastMonth ? "Up vs last month"
+    : sessionsThisMonth < sessionsLastMonth ? "Down vs last month"
+    : "Same as last month"
 
   const sessionInsights = recentSessions
     .filter(s => s.aiSummary)
@@ -52,8 +62,9 @@ Known weaknesses: ${student.weakness ?? "Not recorded"}
 Goals: ${student.goals ?? "Not specified"}
 
 THIS MONTH'S STATS:
-Sessions attended: ${snapshot?.sessionCount ?? recentSessions.length}
+Sessions attended: ${sessionsThisMonth} (${attendanceTrend}${sessionsLastMonth !== null ? `, ${sessionsLastMonth} last month` : ""})
 Improvement rate: ${Math.round(snapshot?.improvementRate ?? 0)}%
+Rating trend: ${ratingTrend}${ratingChange !== 0 ? ` (${ratingChange > 0 ? "+" : ""}${ratingChange} points)` : ""}
 
 RECENT SESSION HIGHLIGHTS:
 ${sessionInsights || "No session data available this month."}
@@ -61,6 +72,7 @@ ${sessionInsights || "No session data available this month."}
 HOMEWORK:
 Completed: ${completedHw.length} tasks
 Pending: ${pendingHw.length} tasks
+${hwCompletionRate !== null ? `Completion rate: ${hwCompletionRate}%` : ""}
 ${pendingHw.length > 0 ? `Pending items: ${pendingHw.map(h => h.title).join(", ")}` : ""}
 
 AI CONTEXT SUMMARY:

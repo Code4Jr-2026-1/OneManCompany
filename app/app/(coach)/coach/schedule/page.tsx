@@ -20,13 +20,18 @@ export default async function SchedulePage() {
         where: { scheduledAt: { gte: monthStart, lte: monthEnd } },
         orderBy: { scheduledAt: "asc" },
       },
+      user: { select: { email: true } },
+      parent: { select: { email: true } },
     },
   })
 
   const groupClasses = await prisma.groupClass.findMany({
     where: { coachId: coach.id, isActive: true },
     include: {
-      enrollments: { where: { status: "ACTIVE" }, select: { id: true } },
+      enrollments: {
+        where: { status: "ACTIVE" },
+        include: { student: { include: { user: { select: { email: true } }, parent: { select: { email: true } } } } },
+      },
     },
   })
 
@@ -36,6 +41,7 @@ export default async function SchedulePage() {
       studentId: s.id,
       studentName: s.name,
       studentPhone: s.phone,
+      studentEmails: [s.user?.email, s.parent?.email].filter((e): e is string => !!e),
       scheduledAt: ss.scheduledAt.toISOString(),
       duration: ss.duration,
       status: ss.status,
@@ -54,7 +60,27 @@ export default async function SchedulePage() {
     capacity: gc.capacity,
     meetingLink: gc.meetingLink,
     whatsappGroupLink: gc.whatsappGroupLink,
+    enrolledEmails: Array.from(new Set(
+      gc.enrollments.flatMap(e => [e.student.user?.email, e.student.parent?.email].filter((em): em is string => !!em))
+    )),
     type: "group" as const,
+  }))
+
+  const studentContacts = students.map(s => ({
+    id: s.id,
+    name: s.name,
+    phone: s.phone,
+    emails: [s.user?.email, s.parent?.email].filter((e): e is string => !!e),
+  }))
+
+  const groupContacts = groupEvents.map(gc => ({
+    id: gc.id,
+    name: gc.name,
+    startTime: gc.startTime,
+    duration: gc.duration,
+    meetingLink: gc.meetingLink,
+    whatsappGroupLink: gc.whatsappGroupLink,
+    enrolledEmails: gc.enrolledEmails,
   }))
 
   return (
@@ -64,7 +90,7 @@ export default async function SchedulePage() {
           <h1 className="text-2xl font-bold text-foreground">Session Schedule</h1>
           <p className="text-muted-foreground text-sm mt-1">{privateEvents.length} private sessions · {groupClasses.length} group class{groupClasses.length !== 1 ? "es" : ""}</p>
         </div>
-        <AddSessionButton students={students.map(s => ({ id: s.id, name: s.name }))} groupClasses={groupClasses.map(g => ({ id: g.id, name: g.name }))} />
+        <AddSessionButton students={studentContacts} groupClasses={groupContacts} />
       </div>
       <WeekCalendar privateEvents={privateEvents} groupEvents={groupEvents} />
     </div>

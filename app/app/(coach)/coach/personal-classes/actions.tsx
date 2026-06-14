@@ -1,63 +1,95 @@
 "use client"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { waLink } from "@/lib/invite"
+import { EmailInviteButton } from "@/components/email-invite-button"
+import { DurationField } from "@/components/duration-field"
 
-type Student = { id: string; name: string; skillLevel: string }
+type Student = { id: string; name: string; skillLevel: string; phone: string | null; emails: string[] }
+
+type BookedInvite = { studentName: string; phone: string | null; emails: string[]; message: string }
 
 function QuickBookModal({ students, onClose }: { students: Student[]; onClose: () => void }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [invite, setInvite] = useState<BookedInvite | null>(null)
 
   async function save(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
     setError("")
     const fd = new FormData(e.currentTarget)
+    const studentId = fd.get("studentId") as string
+    const datetime = fd.get("datetime") as string
+    const duration = Number(fd.get("duration"))
     const res = await fetch("/api/coach/personal-classes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        studentId: fd.get("studentId"),
-        scheduledAt: fd.get("datetime"),
-        duration: Number(fd.get("duration")),
-      }),
+      body: JSON.stringify({ studentId, scheduledAt: datetime, duration }),
     })
     setLoading(false)
-    if (res.ok) { onClose(); router.refresh() }
-    else { const d = await res.json(); setError(d.error || "Failed to book session") }
+    if (res.ok) {
+      const student = students.find(s => s.id === studentId)!
+      const dt = new Date(datetime)
+      const dateStr = dt.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" })
+      const timeStr = dt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
+      const message = `Hi ${student.name}! Your chess session is scheduled for ${dateStr} at ${timeStr} (${duration} min).`
+      setInvite({ studentName: student.name, phone: student.phone, emails: student.emails, message })
+      router.refresh()
+    } else {
+      const d = await res.json(); setError(d.error || "Failed to book session")
+    }
+  }
+
+  function close() {
+    setInvite(null)
+    onClose()
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={close}>
       <div className="bg-card rounded-xl p-6 w-96 shadow-xl" onClick={e => e.stopPropagation()}>
-        <h2 className="font-bold text-foreground mb-4">Quick Book — Private Session</h2>
-        {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-3">{error}</p>}
-        <form onSubmit={save} className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-foreground block mb-1">Student</label>
-            <select name="studentId" required className="w-full border rounded-lg px-3 py-2 text-sm">
-              <option value="">Select a student…</option>
-              {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-foreground block mb-1">Date & Time</label>
-            <input name="datetime" type="datetime-local" required className="w-full border rounded-lg px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-foreground block mb-1">Duration</label>
-            <select name="duration" className="w-full border rounded-lg px-3 py-2 text-sm">
-              {[45, 60, 90, 120].map(d => <option key={d} value={d}>{d} min</option>)}
-            </select>
-          </div>
-          <div className="flex gap-3">
-            <button type="submit" disabled={loading} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
-              {loading ? "Booking…" : "Book Session"}
-            </button>
-            <button type="button" onClick={onClose} className="border px-4 py-2 rounded-lg text-sm hover:bg-accent">Cancel</button>
-          </div>
-        </form>
+        {invite ? (
+          <>
+            <h2 className="font-bold text-foreground mb-1">Session Booked ✓</h2>
+            <p className="text-sm text-muted-foreground mb-4">Private session with {invite.studentName}</p>
+            <div className="space-y-2">
+              <a href={waLink(invite.phone, invite.message)} target="_blank" rel="noopener noreferrer"
+                className="block text-center bg-green-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-green-700">
+                Send WhatsApp Invite
+              </a>
+              <EmailInviteButton emails={invite.emails} subject="Chess Session Scheduled" body={invite.message}
+                linkClassName="block text-center border py-2 rounded-lg text-sm font-medium hover:bg-accent" />
+            </div>
+            <button type="button" onClick={close} className="w-full mt-4 border px-4 py-2 rounded-lg text-sm hover:bg-accent">Done</button>
+          </>
+        ) : (
+          <>
+            <h2 className="font-bold text-foreground mb-4">Quick Book — Private Session</h2>
+            {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-3">{error}</p>}
+            <form onSubmit={save} className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-foreground block mb-1">Student</label>
+                <select name="studentId" required className="w-full border rounded-lg px-3 py-2 text-sm">
+                  <option value="">Select a student…</option>
+                  {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground block mb-1">Date & Time</label>
+                <input name="datetime" type="datetime-local" required className="w-full border rounded-lg px-3 py-2 text-sm" />
+              </div>
+              <DurationField defaultValue={60} />
+              <div className="flex gap-3">
+                <button type="submit" disabled={loading} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
+                  {loading ? "Booking…" : "Book Session"}
+                </button>
+                <button type="button" onClick={close} className="border px-4 py-2 rounded-lg text-sm hover:bg-accent">Cancel</button>
+              </div>
+            </form>
+          </>
+        )}
       </div>
     </div>
   )
@@ -87,12 +119,7 @@ function LogSessionModal({ sessionId, studentName, defaultDuration, onClose }: {
         <h2 className="font-bold text-foreground mb-1">Log Session — {studentName}</h2>
         <p className="text-sm text-muted-foreground mb-4">This will mark the scheduled session as completed.</p>
         <form onSubmit={save} className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-foreground block mb-1">Duration (min)</label>
-            <select name="duration" defaultValue={defaultDuration} className="w-full border rounded-lg px-3 py-2 text-sm">
-              {[30, 45, 60, 90, 120].map(d => <option key={d} value={d}>{d} min</option>)}
-            </select>
-          </div>
+          <DurationField defaultValue={defaultDuration} />
           <div>
             <label className="text-sm font-medium text-foreground block mb-1">Topics Covered</label>
             <input name="topics" placeholder="e.g. Opening theory, tactics" className="w-full border rounded-lg px-3 py-2 text-sm" />
@@ -198,12 +225,7 @@ export function AdHocLogButton({ students }: { students: Student[] }) {
                 <label className="text-sm font-medium text-foreground block mb-1">Date & Time</label>
                 <input name="datetime" type="datetime-local" required defaultValue={localNow} className="w-full border rounded-lg px-3 py-2 text-sm" />
               </div>
-              <div>
-                <label className="text-sm font-medium text-foreground block mb-1">Duration (min)</label>
-                <select name="duration" className="w-full border rounded-lg px-3 py-2 text-sm">
-                  {[30, 45, 60, 90, 120].map(d => <option key={d} value={d}>{d} min</option>)}
-                </select>
-              </div>
+              <DurationField defaultValue={60} />
               <div>
                 <label className="text-sm font-medium text-foreground block mb-1">Topics</label>
                 <input name="topics" placeholder="e.g. Opening, tactics" className="w-full border rounded-lg px-3 py-2 text-sm" />

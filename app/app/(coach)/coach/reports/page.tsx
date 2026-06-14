@@ -15,7 +15,7 @@ export default async function ReportsPage() {
     where: { coachId: coach.id },
     include: {
       parentReports: { orderBy: { createdAt: "desc" }, take: 4 },
-      snapshots: { orderBy: { month: "desc" }, take: 1 },
+      snapshots: { orderBy: { month: "desc" }, take: 2 },
       coachSessions: { orderBy: { date: "desc" }, take: 1 },
     },
     orderBy: { name: "asc" },
@@ -29,6 +29,21 @@ export default async function ReportsPage() {
 
   const monthLabel = currentMonth.toLocaleDateString("en-IN", { month: "long", year: "numeric" })
 
+  // Roster insights — rating trend vs last month
+  function trend(s: typeof students[0]): { dir: "new" | "up" | "down" | "flat"; delta: number } {
+    const [cur, prev] = s.snapshots
+    if (!cur || !prev) return { dir: "new", delta: 0 }
+    const delta = cur.rating - prev.rating
+    const dir = delta > 0 ? "up" : delta < 0 ? "down" : "flat"
+    return { dir, delta }
+  }
+
+  const trends = students.map(s => ({ student: s, ...trend(s) }))
+  const improved = trends.filter(t => t.dir === "up")
+  const declined = trends.filter(t => t.dir === "down")
+  const steady = trends.filter(t => t.dir === "flat")
+  const noData = trends.filter(t => t.dir === "new")
+
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
@@ -39,6 +54,32 @@ export default async function ReportsPage() {
           <GenerateAllButton
             students={students.map(s => ({ id: s.id, name: s.name }))}
           />
+        </div>
+
+        {/* Roster insights */}
+        <div className="grid grid-cols-4 gap-4 mb-6">
+          <div className="bg-card border border-border rounded-xl shadow-sm p-4">
+            <p className="text-xs text-muted-foreground mb-1">Improved this month</p>
+            <p className="text-xl font-bold text-green-600">{improved.length}</p>
+            {improved.length > 0 && (
+              <p className="text-xs text-muted-foreground truncate mt-1">{improved.map(t => t.student.name.split(" ")[0]).join(", ")}</p>
+            )}
+          </div>
+          <div className="bg-card border border-border rounded-xl shadow-sm p-4">
+            <p className="text-xs text-muted-foreground mb-1">Declined</p>
+            <p className={`text-xl font-bold ${declined.length > 0 ? "text-red-500" : "text-foreground"}`}>{declined.length}</p>
+            {declined.length > 0 && (
+              <p className="text-xs text-muted-foreground truncate mt-1">{declined.map(t => t.student.name.split(" ")[0]).join(", ")}</p>
+            )}
+          </div>
+          <div className="bg-card border border-border rounded-xl shadow-sm p-4">
+            <p className="text-xs text-muted-foreground mb-1">Steady (no change)</p>
+            <p className="text-xl font-bold text-yellow-500">{steady.length}</p>
+          </div>
+          <div className="bg-card border border-border rounded-xl shadow-sm p-4">
+            <p className="text-xs text-muted-foreground mb-1">No data yet</p>
+            <p className="text-xl font-bold text-muted-foreground">{noData.length}</p>
+          </div>
         </div>
 
         {/* Draft reports needing review */}

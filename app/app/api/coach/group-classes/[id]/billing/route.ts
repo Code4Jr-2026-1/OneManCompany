@@ -16,7 +16,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!groupClass) return NextResponse.json({ error: "Not found" }, { status: 404 })
 
   const monthParam = req.nextUrl.searchParams.get("month")
-  const monthDate = monthParam ? new Date(monthParam + "-01") : new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+  const now = new Date()
+  const monthDate = monthParam
+    ? new Date(Number(monthParam.slice(0, 4)), Number(monthParam.slice(5, 7)) - 1, 1)
+    : new Date(now.getFullYear(), now.getMonth(), 1)
   const nextMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 1)
 
   const activeEnrollments = await prisma.groupEnrollment.findMany({

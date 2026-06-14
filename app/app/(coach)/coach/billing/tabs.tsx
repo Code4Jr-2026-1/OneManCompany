@@ -1,10 +1,14 @@
 "use client"
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { BillingRowActions } from "@/components/billing-row-actions"
 
-type BillingEntry = { id: string; month: string; sessions: number; hours: number; amount: number; paid: boolean }
-type StudentRow = { id: string; name: string; billingEntries: BillingEntry[] }
-type GroupEnrollment = { studentId: string; studentName: string; paid: boolean; paidAt: string | null; billingEntryId: string | null }
+type CurrentRow = { sessions: number; hours: number; amount: number; paid: boolean; entryId: string | null }
+type PastEntry = { id: string; month: string; sessions: number; hours: number; amount: number; paid: boolean }
+type StudentRow = { id: string; name: string; phone: string | null; current: CurrentRow; pastEntries: PastEntry[] }
+
+type GroupCurrentRow = { sessions: number; amount: number; paid: boolean; entryId: string | null }
+type GroupEnrollment = { studentId: string; studentName: string; studentPhone: string | null; current: GroupCurrentRow }
 type GroupClassRow = { id: string; name: string; groupRate: number; sessionsThisMonth: number; enrollments: GroupEnrollment[] }
 
 interface Props {
@@ -14,47 +18,10 @@ interface Props {
   currentMonth: string
 }
 
-function MarkPaidButton({ entryId }: { entryId: string }) {
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  async function markPaid() {
-    setLoading(true)
-    await fetch(`/api/coach/billing/${entryId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ paid: true }) })
-    setLoading(false)
-    router.refresh()
-  }
-  return (
-    <button onClick={markPaid} disabled={loading} className="text-xs bg-green-50 text-green-700 hover:bg-green-100 px-2.5 py-1 rounded-lg font-medium disabled:opacity-50">
-      {loading ? "…" : "Mark Paid"}
-    </button>
-  )
-}
-
-function GroupMarkPaidButton({ classId, studentId, month, sessions, currentPaid }: { classId: string; studentId: string; month: string; sessions: number; currentPaid: boolean }) {
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  async function toggle() {
-    setLoading(true)
-    await fetch(`/api/coach/group-classes/${classId}/billing`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ studentId, month, sessions }),
-    })
-    setLoading(false)
-    router.refresh()
-  }
-  if (currentPaid) return <span className="text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded-full">✓ Paid</span>
-  return (
-    <button onClick={toggle} disabled={loading} className="text-xs bg-green-50 text-green-700 hover:bg-green-100 px-2.5 py-1 rounded-lg font-medium disabled:opacity-50">
-      {loading ? "…" : "Mark Paid"}
-    </button>
-  )
-}
-
 export function BillingTabs({ students, hourlyRate, groupClasses, currentMonth }: Props) {
   const [tab, setTab] = useState<"private" | "group">("private")
 
-  const currentMonthDate = new Date(currentMonth)
+  const currentMonthLabel = new Date(currentMonth).toLocaleDateString("en-IN", { month: "long", year: "numeric" })
 
   return (
     <div>
@@ -71,39 +38,59 @@ export function BillingTabs({ students, hourlyRate, groupClasses, currentMonth }
 
       {tab === "private" && (
         <div className="space-y-4">
-          {students.map(s => {
-            const currentEntry = s.billingEntries.find(e => new Date(e.month).getMonth() === currentMonthDate.getMonth())
-            return (
-              <div key={s.id} className="bg-card border border-border rounded-xl shadow-sm">
-                <div className="px-6 py-4 border-b flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs">
-                      {s.name.split(" ").map(n => n[0]).join("").slice(0,2)}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-foreground">{s.name}</p>
-                      <p className="text-xs text-muted-foreground">Rate: ₹{hourlyRate.toLocaleString()}/hr</p>
-                    </div>
+          {students.map(s => (
+            <div key={s.id} className="bg-card border border-border rounded-xl shadow-sm">
+              <div className="px-6 py-4 border-b flex items-center justify-between">
+                <Link href={`/coach/billing/${s.id}`} className="flex items-center gap-3 hover:opacity-80">
+                  <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs">
+                    {s.name.split(" ").map(n => n[0]).join("").slice(0,2)}
                   </div>
-                  {currentEntry && !currentEntry.paid && <MarkPaidButton entryId={currentEntry.id} />}
-                </div>
-                <div className="divide-y">
-                  {s.billingEntries.length === 0 ? (
-                    <p className="px-6 py-4 text-sm text-muted-foreground">No private billing entries yet.</p>
-                  ) : s.billingEntries.map(e => (
-                    <div key={e.id} className="px-6 py-3 flex items-center gap-4">
-                      <span className="text-sm text-muted-foreground w-28">{new Date(e.month).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</span>
-                      <span className="text-sm text-foreground">{e.sessions} sessions · {e.hours}h</span>
-                      <span className="text-sm font-semibold text-foreground ml-auto">₹{e.amount.toLocaleString()}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${e.paid ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
-                        {e.paid ? "✓ Paid" : "Pending"}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                  <div>
+                    <p className="font-semibold text-foreground hover:underline">{s.name}</p>
+                    <p className="text-xs text-muted-foreground">Rate: ₹{hourlyRate.toLocaleString()}/hr</p>
+                  </div>
+                </Link>
               </div>
-            )
-          })}
+              <div className="divide-y">
+                {/* Current month — live */}
+                <div className="px-6 py-3 flex items-center gap-4 bg-blue-50/40">
+                  <span className="text-sm font-medium text-foreground w-36">{currentMonthLabel}</span>
+                  <span className="text-sm text-foreground">{s.current.sessions} session{s.current.sessions !== 1 ? "s" : ""} · {s.current.hours.toFixed(1)}h</span>
+                  <span className="text-sm font-semibold text-foreground ml-auto">₹{s.current.amount.toLocaleString()}</span>
+                  <BillingRowActions
+                    entryId={s.current.entryId}
+                    paid={s.current.paid}
+                    amount={s.current.amount}
+                    sessions={s.current.sessions}
+                    hours={s.current.hours}
+                    studentId={s.id}
+                    month={currentMonth}
+                    studentName={s.name}
+                    studentPhone={s.phone}
+                  />
+                </div>
+                {/* Past months — stored entries */}
+                {s.pastEntries.map(e => (
+                  <div key={e.id} className="px-6 py-3 flex items-center gap-4">
+                    <span className="text-sm text-muted-foreground w-36">{new Date(e.month).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</span>
+                    <span className="text-sm text-foreground">{e.sessions} session{e.sessions !== 1 ? "s" : ""} · {e.hours}h</span>
+                    <span className="text-sm font-semibold text-foreground ml-auto">₹{e.amount.toLocaleString()}</span>
+                    <BillingRowActions
+                      entryId={e.id}
+                      paid={e.paid}
+                      amount={e.amount}
+                      sessions={e.sessions}
+                      hours={e.hours}
+                      studentId={s.id}
+                      month={e.month}
+                      studentName={s.name}
+                      studentPhone={s.phone}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
           {students.length === 0 && (
             <div className="bg-card border border-border rounded-xl shadow-sm px-6 py-12 text-center text-muted-foreground">No students yet.</div>
           )}
@@ -118,7 +105,7 @@ export function BillingTabs({ students, hourlyRate, groupClasses, currentMonth }
             </div>
           )}
           {groupClasses.map(gc => {
-            const monthTotal = gc.sessionsThisMonth * gc.groupRate * gc.enrollments.length
+            const monthTotal = gc.enrollments.reduce((a, e) => a + e.current.amount, 0)
             return (
               <div key={gc.id} className="bg-card border border-border rounded-xl shadow-sm">
                 <div className="px-6 py-4 border-b">
@@ -149,18 +136,26 @@ export function BillingTabs({ students, hourlyRate, groupClasses, currentMonth }
                     <tbody className="divide-y">
                       {gc.enrollments.map(e => (
                         <tr key={e.studentId}>
-                          <td className="px-6 py-3 font-medium text-foreground">{e.studentName}</td>
-                          <td className="px-6 py-3 text-center text-muted-foreground">{gc.sessionsThisMonth}</td>
+                          <td className="px-6 py-3 font-medium text-foreground">
+                            <Link href={`/coach/billing/${e.studentId}`} className="hover:underline">{e.studentName}</Link>
+                          </td>
+                          <td className="px-6 py-3 text-center text-muted-foreground">{e.current.sessions}</td>
                           <td className="px-6 py-3 text-center text-muted-foreground">₹{gc.groupRate}</td>
-                          <td className="px-6 py-3 text-right font-semibold text-foreground">₹{(gc.sessionsThisMonth * gc.groupRate).toLocaleString()}</td>
+                          <td className="px-6 py-3 text-right font-semibold text-foreground">₹{e.current.amount.toLocaleString()}</td>
                           <td className="px-6 py-3 text-right">
-                            <GroupMarkPaidButton
-                              classId={gc.id}
-                              studentId={e.studentId}
-                              month={currentMonth}
-                              sessions={gc.sessionsThisMonth}
-                              currentPaid={e.paid}
-                            />
+                            <div className="flex justify-end">
+                              <BillingRowActions
+                                entryId={e.current.entryId}
+                                paid={e.current.paid}
+                                amount={e.current.amount}
+                                sessions={e.current.sessions}
+                                studentId={e.studentId}
+                                month={currentMonth}
+                                groupClassId={gc.id}
+                                studentName={e.studentName}
+                                studentPhone={e.studentPhone}
+                              />
+                            </div>
                           </td>
                         </tr>
                       ))}
