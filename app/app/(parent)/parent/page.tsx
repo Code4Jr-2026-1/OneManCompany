@@ -2,6 +2,8 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { SignOutButton } from "@/components/sign-out-button"
+import { PayUpiButton } from "@/components/pay-upi-button"
+import { monthBounds, privateAmount, groupAmount } from "@/lib/billing"
 
 export default async function ParentPortal() {
   const session = await auth()
@@ -14,8 +16,55 @@ export default async function ParentPortal() {
       snapshots: { orderBy: { month: "desc" }, take: 2 },
       plans: { where: { isActive: true }, take: 1 },
       parentReports: { orderBy: { createdAt: "desc" }, take: 3 },
+      coach: { select: { name: true, hourlyRate: true, upiId: true } },
+      coachSessions: { select: { duration: true, date: true } },
+      groupEnrollments: { where: { status: "ACTIVE" }, include: { groupClass: true } },
+      billingEntries: { include: { groupClass: { select: { name: true } } }, orderBy: { month: "desc" } },
     },
   }) : []
+
+  const { monthStart, nextMonth } = monthBounds(new Date())
+
+  // Compute live billing rows per child (current month + history)
+  const billingByChild = new Map<string, {
+    rows: { label: string; amount: number; paid: boolean; entryId: string | null }[]
+    pendingTotal: number
+    monthLabel: string
+  }>()
+
+  for (const child of children) {
+    const hourlyRate = child.coach?.hourlyRate ?? 500
+    const rows: { label: string; amount: number; paid: boolean; entryId: string | null }[] = []
+
+    // Current month private
+    const currentSessions = child.coachSessions.filter(s => s.date >= monthStart && s.date < nextMonth)
+    const currentHours = currentSessions.reduce((a, s) => a + s.duration, 0) / 60
+    const privateEntry = child.billingEntries.find(e => !e.groupClassId && e.month.getTime() === monthStart.getTime())
+    const privateAmt = privateAmount(currentHours, hourlyRate)
+    if (privateAmt > 0) rows.push({ label: "Private Lessons", amount: privateAmt, paid: privateEntry?.paid ?? false, entryId: privateEntry?.id ?? null })
+
+    // Current month group classes
+    for (const e of child.groupEnrollments) {
+      const sessionsCount = await prisma.groupSession.count({
+        where: { groupClassId: e.groupClassId, date: { gte: monthStart, lt: nextMonth } },
+      })
+      const amt = groupAmount(sessionsCount, e.groupClass.groupRate)
+      if (amt > 0) {
+        const entry = child.billingEntries.find(b => b.groupClassId === e.groupClassId && b.month.getTime() === monthStart.getTime())
+        rows.push({ label: `Group: ${e.groupClass.name}`, amount: amt, paid: entry?.paid ?? false, entryId: entry?.id ?? null })
+      }
+    }
+
+    // Historical unpaid entries
+    const historicalUnpaid = child.billingEntries.filter(e => e.month.getTime() < monthStart.getTime() && !e.paid)
+    for (const e of historicalUnpaid) {
+      const label = e.groupClassId ? `Group: ${e.groupClass?.name ?? "—"}` : "Private Lessons"
+      rows.push({ label: `${label} (${new Date(e.month).toLocaleDateString("en-IN", { month: "short", year: "numeric" })})`, amount: e.amount, paid: false, entryId: e.id })
+    }
+
+    const pendingTotal = rows.filter(r => !r.paid).reduce((a, r) => a + r.amount, 0)
+    billingByChild.set(child.id, { rows, pendingTotal, monthLabel: monthStart.toLocaleDateString("en-IN", { month: "long", year: "numeric" }) })
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -94,6 +143,43 @@ export default async function ParentPortal() {
                     </div>
                   )}
                 </div>
+
+                {/* Billing */}
+                {(() => {
+                  const billing = billingByChild.get(child.id)!
+                  if (billing.rows.length === 0) return null
+                  return (
+                    <div className="px-6 pb-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-semibold text-gray-900">Billing — {billing.monthLabel}</h3>
+                        <span className={`text-sm font-bold ${billing.pendingTotal > 0 ? "text-amber-600" : "text-green-600"}`}>
+                          {billing.pendingTotal > 0 ? `₹${billing.pendingTotal.toLocaleString()} due` : "All paid ✓"}
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        {billing.rows.map((r, i) => (
+                          <div key={i} className="flex items-center gap-3 bg-gray-50 rounded-lg p-3">
+                            <span className="text-sm text-gray-700 flex-1">{r.label}</span>
+                            <span className="text-sm font-semibold text-gray-900">₹{r.amount.toLocaleString()}</span>
+                            {r.paid ? (
+                              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">✓ Paid</span>
+                            ) : (
+                              <>
+                                <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Pending</span>
+                                <PayUpiButton
+                                  upiId={child.coach?.upiId}
+                                  payeeName={child.coach?.name ?? "Coach"}
+                                  amount={r.amount}
+                                  note={`${child.name} — ${r.label}`}
+                                />
+                              </>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })()}
 
                 {child.parentReports.length > 0 && (
                   <div className="px-6 pb-6">

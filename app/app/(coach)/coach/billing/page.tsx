@@ -186,6 +186,8 @@ export default async function BillingPage() {
             }
           })}
           hourlyRate={hourlyRate}
+          coachUpiId={coach.upiId}
+          coachName={coach.name ?? "Coach"}
           groupClasses={groupClasses.map(gc => ({
             id: gc.id,
             name: gc.name,

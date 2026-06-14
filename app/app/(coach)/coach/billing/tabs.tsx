@@ -16,9 +16,11 @@ interface Props {
   hourlyRate: number
   groupClasses: GroupClassRow[]
   currentMonth: string
+  coachUpiId: string | null
+  coachName: string
 }
 
-export function BillingTabs({ students, hourlyRate, groupClasses, currentMonth }: Props) {
+export function BillingTabs({ students, hourlyRate, groupClasses, currentMonth, coachUpiId, coachName }: Props) {
   const [tab, setTab] = useState<"private" | "group">("private")
 
   const currentMonthLabel = new Date(currentMonth).toLocaleDateString("en-IN", { month: "long", year: "numeric" })
@@ -67,6 +69,8 @@ export function BillingTabs({ students, hourlyRate, groupClasses, currentMonth }
                     month={currentMonth}
                     studentName={s.name}
                     studentPhone={s.phone}
+                    coachUpiId={coachUpiId}
+                    coachName={coachName}
                   />
                 </div>
                 {/* Past months — stored entries */}
@@ -85,6 +89,8 @@ export function BillingTabs({ students, hourlyRate, groupClasses, currentMonth }
                       month={e.month}
                       studentName={s.name}
                       studentPhone={s.phone}
+                      coachUpiId={coachUpiId}
+                      coachName={coachName}
                     />
                   </div>
                 ))}
@@ -154,6 +160,8 @@ export function BillingTabs({ students, hourlyRate, groupClasses, currentMonth }
                                 groupClassId={gc.id}
                                 studentName={e.studentName}
                                 studentPhone={e.studentPhone}
+                                coachUpiId={coachUpiId}
+                                coachName={coachName}
                               />
                             </div>
                           </td>

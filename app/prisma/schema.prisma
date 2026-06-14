@@ -16,6 +16,7 @@ model User {
   role          String    @default("STUDENT")
   password      String?
   hourlyRate    Float?
+  upiId         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

@@ -2,6 +2,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { waLink } from "@/lib/invite"
+import { PayUpiButton } from "@/components/pay-upi-button"
 
 interface Props {
   entryId: string | null
@@ -14,9 +15,11 @@ interface Props {
   groupClassId?: string | null
   studentName?: string
   studentPhone?: string | null
+  coachUpiId?: string | null
+  coachName?: string
 }
 
-export function BillingRowActions({ entryId, paid, amount, sessions, studentId, month, hours = 0, groupClassId = null, studentName = "", studentPhone = null }: Props) {
+export function BillingRowActions({ entryId, paid, amount, sessions, studentId, month, hours = 0, groupClassId = null, studentName = "", studentPhone = null, coachUpiId = null, coachName = "Coach" }: Props) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
 
@@ -74,6 +77,7 @@ export function BillingRowActions({ entryId, paid, amount, sessions, studentId, 
         className="text-xs bg-green-50 text-green-700 hover:bg-green-100 px-2.5 py-1 rounded-lg font-medium">
         💬 Remind
       </a>
+      <PayUpiButton upiId={coachUpiId} payeeName={coachName} amount={amount} note={`Chess coaching - ${monthLabel}`} studentName={studentName} studentPhone={studentPhone} />
       <button onClick={markPaid} disabled={loading} className="text-xs bg-green-50 text-green-700 hover:bg-green-100 px-2.5 py-1 rounded-lg font-medium disabled:opacity-50">
         {loading ? "…" : "Mark Paid"}
       </button>

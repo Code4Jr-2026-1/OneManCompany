@@ -129,6 +129,8 @@ export default async function StudentBillingPage({ params }: { params: Promise<{
                 groupClassId={r.groupClassId}
                 studentName={student.name}
                 studentPhone={student.phone}
+                coachUpiId={coach.upiId}
+                coachName={coach.name ?? "Coach"}
               />
             </div>
           ))}
@@ -159,6 +161,8 @@ export default async function StudentBillingPage({ params }: { params: Promise<{
                 groupClassId={e.groupClassId}
                 studentName={student.name}
                 studentPhone={student.phone}
+                coachUpiId={coach.upiId}
+                coachName={coach.name ?? "Coach"}
               />
             </div>
           ))}
