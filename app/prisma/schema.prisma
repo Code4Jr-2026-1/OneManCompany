@@ -26,6 +26,7 @@ model User {
   parentOf        Student[]       @relation("ParentStudents")
   lessonTemplates LessonTemplate[]
   groupClasses    GroupClass[]
+  studentInvites  StudentInvite[]
 }
 
 model Account {
@@ -71,6 +72,11 @@ model Student {
   goals      String?
   notes      String?
   phone      String?
+  email      String?
+  lichessId  String?
+  fideId     String?
+  aicfId     String?
+  stateId    String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -290,4 +296,29 @@ model GroupSession {
   createdAt     DateTime   @default(now())
 
   groupClass    GroupClass @relation(fields: [groupClassId], references: [id], onDelete: Cascade)
+}
+
+model StudentInvite {
+  id          String   @id @default(cuid())
+  token       String   @unique
+  coachId     String
+  status      String   @default("PENDING")
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  submittedAt DateTime?
+
+  name       String?
+  age        Int?
+  phone      String?
+  email      String?
+  skillLevel String?
+  goals      String?
+  lichessId  String?
+  fideId     String?
+  aicfId     String?
+  stateId    String?
+
+  studentId String?
+
+  coach User @relation(fields: [coachId], references: [id], onDelete: Cascade)
 }

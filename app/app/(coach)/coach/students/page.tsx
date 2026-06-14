@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { StudentSearch } from "./search"
+import { InviteStudentButton } from "./invite-student-button"
+import { PendingInvites } from "./pending-invites"
 
 export default async function StudentsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q } = await searchParams
@@ -23,6 +25,11 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
       scheduledSessions: { where: { scheduledAt: { gte: new Date() } }, orderBy: { scheduledAt: "asc" }, take: 1 },
     },
     orderBy: { updatedAt: "desc" },
+  })
+
+  const pendingInvites = await prisma.studentInvite.findMany({
+    where: { coachId: coach.id, status: "SUBMITTED" },
+    orderBy: { submittedAt: "desc" },
   })
 
   const now = new Date()
@@ -54,11 +61,19 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
             <Link href="/coach/compare">
               <button className="border px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent text-foreground">⚖ Compare</button>
             </Link>
+            <InviteStudentButton />
             <Link href="/coach/students/new">
               <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">+ Add Student</button>
             </Link>
           </div>
         </div>
+
+        <PendingInvites invites={pendingInvites.map(i => ({
+          id: i.id, name: i.name, age: i.age, phone: i.phone, email: i.email,
+          skillLevel: i.skillLevel, goals: i.goals, lichessId: i.lichessId,
+          fideId: i.fideId, aicfId: i.aicfId, stateId: i.stateId,
+          submittedAt: i.submittedAt?.toISOString() ?? null,
+        }))} />
 
         {/* Legend */}
         <div className="flex items-center gap-4 mb-3 text-xs text-muted-foreground">

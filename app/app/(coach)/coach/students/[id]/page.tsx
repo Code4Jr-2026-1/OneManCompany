@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { redirect, notFound } from "next/navigation"
 import Link from "next/link"
 import { PhoneEditor } from "./phone-editor"
+import { RatingEditor } from "./rating-editor"
 import { AiSuggestion } from "./ai-suggestion"
 import { AiSummary } from "./ai-summary"
 import { MonthlyAttendance } from "./monthly-attendance"
@@ -78,11 +79,15 @@ export default async function StudentDetail({ params }: { params: Promise<{ id: 
             <h2 className="text-lg font-bold text-foreground text-center">{student.name}</h2>
             <p className="text-sm text-muted-foreground text-center capitalize">{student.skillLevel}</p>
             <div className="mt-4 space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">Rating</span><span className="font-semibold">{student.rating} {ratingChange !== 0 && <span className={ratingChange > 0 ? "text-green-600" : "text-red-600"}>({ratingChange >= 0 ? "+" : ""}{ratingChange})</span>}</span></div>
+              <div className="flex justify-between items-center"><span className="text-muted-foreground">Rating</span><span className="font-semibold flex items-center gap-1.5">{student.rating} {ratingChange !== 0 && <span className={ratingChange > 0 ? "text-green-600" : "text-red-600"}>({ratingChange >= 0 ? "+" : ""}{ratingChange})</span>}<RatingEditor studentId={student.id} rating={student.rating} /></span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Age</span><span className="font-semibold">{student.age ?? "—"}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Sessions completed</span><span className="font-semibold">{student.coachSessions.length}</span></div>
               {lastSession && <div className="flex justify-between"><span className="text-muted-foreground">Last session</span><span className="font-semibold">{new Date(lastSession.date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span></div>}
               <div className="flex justify-between items-center"><span className="text-muted-foreground">WhatsApp</span><PhoneEditor studentId={student.id} phone={student.phone} /></div>
+              {student.lichessId && <div className="flex justify-between"><span className="text-muted-foreground">Lichess</span><span className="font-semibold">{student.lichessId}</span></div>}
+              {student.fideId && <div className="flex justify-between"><span className="text-muted-foreground">FIDE ID</span><span className="font-semibold">{student.fideId}</span></div>}
+              {student.aicfId && <div className="flex justify-between"><span className="text-muted-foreground">AICF ID</span><span className="font-semibold">{student.aicfId}</span></div>}
+              {student.stateId && <div className="flex justify-between"><span className="text-muted-foreground">State ID</span><span className="font-semibold">{student.stateId}</span></div>}
             </div>
             {student.goals && <div className="mt-4 p-3 bg-blue-50 rounded-lg"><p className="text-xs text-muted-foreground mb-1">Goals</p><p className="text-sm text-foreground">{student.goals}</p></div>}
             {student.weakness && <div className="mt-2 p-3 bg-red-50 rounded-lg"><p className="text-xs text-red-400 mb-1">Known Weaknesses</p><p className="text-sm text-red-700">{student.weakness}</p></div>}
