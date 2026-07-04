@@ -2,7 +2,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 
-export function SettingsForm({ upiId, hourlyRate }: { upiId: string; hourlyRate: number }) {
+export function SettingsForm({ upiId, hourlyRate, defaultMeetingLink }: { upiId: string; hourlyRate: number; defaultMeetingLink: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -18,6 +18,7 @@ export function SettingsForm({ upiId, hourlyRate }: { upiId: string; hourlyRate:
       body: JSON.stringify({
         upiId: fd.get("upiId"),
         hourlyRate: Number(fd.get("hourlyRate") || 0),
+        defaultMeetingLink: fd.get("defaultMeetingLink") || null,
       }),
     })
     setLoading(false)
@@ -37,6 +38,15 @@ export function SettingsForm({ upiId, hourlyRate }: { upiId: string; hourlyRate:
         <label className="block text-sm font-medium text-foreground mb-1">Default Hourly Rate (₹)</label>
         <input name="hourlyRate" type="number" defaultValue={hourlyRate}
           className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-foreground mb-1">Default Meeting Room (Zoom)</label>
+        <input name="defaultMeetingLink" type="url" defaultValue={defaultMeetingLink}
+          placeholder="https://zoom.us/j/your-meeting-id"
+          className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <p className="text-xs text-muted-foreground mt-1">
+          Paste your Zoom personal room link. It will be auto-attached to every private session booking and included in WhatsApp / email invites.
+        </p>
       </div>
       <div className="flex items-center gap-3">
         <button type="submit" disabled={loading} className="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">

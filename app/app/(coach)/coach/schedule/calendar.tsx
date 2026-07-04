@@ -155,8 +155,8 @@ export function AddSessionButton({ students, groupClasses }: { students: Student
                       </div>
                       <DurationField defaultValue={60} />
                       <div>
-                        <label className="text-sm font-medium text-foreground block mb-1">Meeting Link <span className="text-muted-foreground font-normal">(optional — a Zoom link is created automatically if left blank)</span></label>
-                        <input name="meetingLink" type="url" placeholder="https://meet.google.com/..." className="w-full border rounded-lg px-3 py-2 text-sm" />
+                        <label className="text-sm font-medium text-foreground block mb-1">Meeting Link <span className="text-muted-foreground font-normal">(optional — leave blank to use your default room)</span></label>
+                        <input name="meetingLink" type="url" placeholder="https://zoom.us/j/… (or leave blank)" className="w-full border rounded-lg px-3 py-2 text-sm" />
                       </div>
                     </>
                   ) : (

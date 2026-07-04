@@ -12,9 +12,13 @@ export default async function SettingsPage() {
   return (
     <div className="max-w-2xl mx-auto px-6 py-8">
       <h1 className="text-2xl font-bold text-foreground mb-2">Settings</h1>
-      <p className="text-muted-foreground text-sm mb-6">Payment details used for billing and UPI payment requests</p>
+      <p className="text-muted-foreground text-sm mb-6">Payment details and meeting room for your sessions</p>
 
-      <SettingsForm upiId={coach.upiId ?? ""} hourlyRate={coach.hourlyRate ?? 500} />
+      <SettingsForm
+        upiId={coach.upiId ?? ""}
+        hourlyRate={coach.hourlyRate ?? 500}
+        defaultMeetingLink={(coach as { defaultMeetingLink?: string | null }).defaultMeetingLink ?? ""}
+      />
     </div>
   )
 }

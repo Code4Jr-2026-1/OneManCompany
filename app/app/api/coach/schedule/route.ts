@@ -40,6 +40,10 @@ export async function POST(req: Request) {
       console.error("[schedule] Zoom meeting creation failed:", err)
     }
   }
+  // Fall back to coach's default meeting room if still no link
+  if (!meetingLink && coach) {
+    meetingLink = (coach as { defaultMeetingLink?: string | null }).defaultMeetingLink ?? null
+  }
 
   const s = await prisma.scheduledSession.create({
     data: {

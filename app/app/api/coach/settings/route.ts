@@ -16,6 +16,7 @@ export async function PATCH(req: NextRequest) {
     data: {
       upiId: body.upiId ?? null,
       hourlyRate: body.hourlyRate !== undefined ? Number(body.hourlyRate) : undefined,
+      defaultMeetingLink: body.defaultMeetingLink ?? null,
     },
   })
 
