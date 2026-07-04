@@ -15,10 +15,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!student) return NextResponse.json({ error: "Not found" }, { status: 404 })
 
   const body = await req.json()
-  const updated = await prisma.student.update({
-    where: { id },
-    data: { phone: body.phone ?? null },
-  })
+  const data: Record<string, unknown> = {}
+  if ("phone" in body) data.phone = body.phone ?? null
+  if ("billingType" in body) data.billingType = body.billingType
+  if ("monthlyFee" in body) data.monthlyFee = body.monthlyFee != null ? Number(body.monthlyFee) : null
+  const updated = await prisma.student.update({ where: { id }, data })
 
   return NextResponse.json(updated)
 }

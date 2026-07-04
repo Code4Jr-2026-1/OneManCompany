@@ -4,6 +4,7 @@ import { redirect, notFound } from "next/navigation"
 import Link from "next/link"
 import { PhoneEditor } from "./phone-editor"
 import { RatingEditor } from "./rating-editor"
+import { BillingEditor } from "./billing-editor"
 import { AiSuggestion } from "./ai-suggestion"
 import { AiSummary } from "./ai-summary"
 import { MonthlyAttendance } from "./monthly-attendance"
@@ -63,8 +64,8 @@ export default async function StudentDetail({ params }: { params: Promise<{ id: 
         <span className="text-muted-foreground">/</span>
         <span className="font-semibold text-foreground">{student.name}</span>
         <div className="ml-auto flex gap-2">
-          <Link href={`/coach/students/${id}/end-session`}>
-            <button className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-700">✓ End Session</button>
+          <Link href={`/coach`}>
+            <button className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-700">Today →</button>
           </Link>
         </div>
       </nav>
@@ -84,6 +85,17 @@ export default async function StudentDetail({ params }: { params: Promise<{ id: 
               <div className="flex justify-between"><span className="text-muted-foreground">Sessions completed</span><span className="font-semibold">{student.coachSessions.length}</span></div>
               {lastSession && <div className="flex justify-between"><span className="text-muted-foreground">Last session</span><span className="font-semibold">{new Date(lastSession.date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span></div>}
               <div className="flex justify-between items-center"><span className="text-muted-foreground">WhatsApp</span><PhoneEditor studentId={student.id} phone={student.phone} /></div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Billing</span>
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground capitalize">{(student as { billingType?: string }).billingType ?? "hourly"}</p>
+                  <BillingEditor
+                    studentId={student.id}
+                    billingType={(student as { billingType?: string }).billingType ?? "hourly"}
+                    monthlyFee={(student as { monthlyFee?: number | null }).monthlyFee ?? null}
+                  />
+                </div>
+              </div>
               {student.lichessId && <div className="flex justify-between"><span className="text-muted-foreground">Lichess</span><span className="font-semibold">{student.lichessId}</span></div>}
               {student.fideId && <div className="flex justify-between"><span className="text-muted-foreground">FIDE ID</span><span className="font-semibold">{student.fideId}</span></div>}
               {student.aicfId && <div className="flex justify-between"><span className="text-muted-foreground">AICF ID</span><span className="font-semibold">{student.aicfId}</span></div>}

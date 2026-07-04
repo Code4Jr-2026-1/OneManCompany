@@ -17,15 +17,43 @@ export type PendingInvite = {
   submittedAt: string | null
 }
 
+type ApprovedInfo = { name: string; email: string; tempPassword: string }
+
 export function PendingInvites({ invites }: { invites: PendingInvite[] }) {
   const router = useRouter()
   const [busy, setBusy] = useState<string | null>(null)
+  const [approved, setApproved] = useState<ApprovedInfo | null>(null)
 
-  async function act(id: string, action: "approve" | "reject") {
+  async function act(id: string, action: "approve" | "reject", inv: PendingInvite) {
     setBusy(id)
-    await fetch(`/api/coach/student-invites/${id}/${action}`, { method: "POST" })
+    const res = await fetch(`/api/coach/student-invites/${id}/${action}`, { method: "POST" })
     setBusy(null)
+    if (action === "approve" && res.ok) {
+      const data = await res.json()
+      if (data.tempPassword && inv.email) {
+        setApproved({ name: inv.name ?? "Student", email: inv.email, tempPassword: data.tempPassword })
+        return
+      }
+    }
     router.refresh()
+  }
+
+  if (approved) {
+    return (
+      <div className="bg-green-50 border border-green-200 rounded-xl shadow-sm mb-6 p-6">
+        <h2 className="font-semibold text-green-800 mb-3">✓ {approved.name} approved!</h2>
+        <p className="text-sm text-green-700 mb-4">Share these login credentials with the student:</p>
+        <div className="bg-white border border-green-200 rounded-lg p-4 font-mono text-sm space-y-1">
+          <div><span className="text-muted-foreground">Email:</span> {approved.email}</div>
+          <div><span className="text-muted-foreground">Password:</span> {approved.tempPassword}</div>
+        </div>
+        <p className="text-xs text-muted-foreground mt-3">Student should change their password after first login.</p>
+        <button onClick={() => { setApproved(null); router.refresh() }}
+          className="mt-4 text-sm bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+          Done
+        </button>
+      </div>
+    )
   }
 
   if (invites.length === 0) return null
@@ -55,11 +83,11 @@ export function PendingInvites({ invites }: { invites: PendingInvite[] }) {
               )}
             </div>
             <div className="flex gap-2 flex-shrink-0">
-              <button onClick={() => act(inv.id, "approve")} disabled={busy === inv.id}
+              <button onClick={() => act(inv.id, "approve", inv)} disabled={busy === inv.id}
                 className="text-xs bg-green-600 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50">
                 {busy === inv.id ? "…" : "✓ Approve"}
               </button>
-              <button onClick={() => act(inv.id, "reject")} disabled={busy === inv.id}
+              <button onClick={() => act(inv.id, "reject", inv)} disabled={busy === inv.id}
                 className="text-xs border px-3 py-1.5 rounded-lg font-medium hover:bg-accent disabled:opacity-50">
                 Reject
               </button>

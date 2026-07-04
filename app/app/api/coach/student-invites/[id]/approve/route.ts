@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import bcrypt from "bcryptjs"
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -38,10 +39,31 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     },
   })
 
+  // Create User account so student can log in
+  let tempPassword: string | null = null
+  if (invite.email) {
+    const existing = await prisma.user.findUnique({ where: { email: invite.email } })
+    if (!existing) {
+      tempPassword = "chess123"
+      const hashedPw = await bcrypt.hash(tempPassword, 10)
+      const user = await prisma.user.create({
+        data: {
+          name: invite.name || "Student",
+          email: invite.email,
+          password: hashedPw,
+          role: "STUDENT",
+        },
+      })
+      await prisma.student.update({ where: { id: student.id }, data: { userId: user.id } })
+    } else {
+      await prisma.student.update({ where: { id: student.id }, data: { userId: existing.id } })
+    }
+  }
+
   await prisma.studentInvite.update({
     where: { id },
     data: { status: "APPROVED", studentId: student.id },
   })
 
-  return NextResponse.json(student)
+  return NextResponse.json({ ...student, tempPassword })
 }

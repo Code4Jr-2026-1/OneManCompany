@@ -92,8 +92,8 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
           <span className="flex items-center gap-1"><span className="text-muted-foreground font-bold">✦</span> New / no data yet</span>
         </div>
 
-        <div className="bg-card border border-border rounded-xl shadow-sm">
-          <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+        <div className="bg-card border border-border rounded-xl shadow-sm overflow-x-auto">
+          <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b text-xs font-semibold text-muted-foreground uppercase tracking-wide min-w-[640px]">
             <div className="col-span-3">Student</div>
             <div className="col-span-1 text-center">Rating</div>
             <div className="col-span-1 text-center">Trend</div>
@@ -113,7 +113,7 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
             const next = s.scheduledSessions[0]
             const initials = s.name.split(" ").map(n => n[0]).join("").slice(0,2)
             return (
-              <div key={s.id} className={`grid grid-cols-12 gap-4 px-6 py-4 border-b last:border-0 items-center hover:bg-accent ${days >= 7 ? "bg-red-50/30" : ""}`}>
+              <div key={s.id} className={`grid grid-cols-12 gap-4 px-6 py-4 border-b last:border-0 items-center hover:bg-accent min-w-[640px] ${days >= 7 ? "bg-red-50/30" : ""}`}>
                 <Link href={`/coach/students/${s.id}`} className="contents">
                   <div className="col-span-3 flex items-center gap-3 cursor-pointer">
                     <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs flex-shrink-0">{initials}</div>
@@ -155,7 +155,7 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
                   </div>
                 </Link>
                 <div className="col-span-2 flex gap-1.5 justify-end">
-                  <Link href={`/coach/students/${s.id}/end-session`}><button className="text-xs bg-green-50 hover:bg-green-100 px-2.5 py-1.5 rounded text-green-700">End Session</button></Link>
+                  <Link href={`/coach/students/${s.id}`}><button className="text-xs bg-secondary hover:bg-accent px-2.5 py-1.5 rounded text-foreground">View →</button></Link>
                 </div>
               </div>
             )

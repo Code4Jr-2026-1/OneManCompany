@@ -46,8 +46,10 @@ export default async function ParentPortal() {
     const currentSessions = child.coachSessions.filter(s => s.date >= monthStart && s.date < nextMonth)
     const currentHours = currentSessions.reduce((a, s) => a + s.duration, 0) / 60
     const privateEntry = child.billingEntries.find(e => !e.groupClassId && e.month.getTime() === monthStart.getTime())
-    const privateAmt = privateAmount(currentHours, hourlyRate)
-    if (privateAmt > 0) rows.push({ label: "Private Lessons", amount: privateAmt, paid: privateEntry?.paid ?? false, entryId: privateEntry?.id ?? null })
+    const isFlat = (child as { billingType?: string }).billingType === "monthly"
+    const flatFee = (child as { monthlyFee?: number | null }).monthlyFee
+    const privateAmt = isFlat && flatFee ? flatFee : privateAmount(currentHours, hourlyRate)
+    if (privateAmt > 0) rows.push({ label: isFlat ? "Monthly Fee" : "Private Lessons", amount: privateAmt, paid: privateEntry?.paid ?? false, entryId: privateEntry?.id ?? null })
 
     for (const e of child.groupEnrollments) {
       const sessionsCount = await prisma.groupSession.count({
@@ -158,8 +160,8 @@ export default async function ParentPortal() {
                     {/* Last topic */}
                     <div className="bg-secondary rounded-xl p-4 text-center">
                       <p className="text-xs text-muted-foreground mb-1">Last class</p>
-                      <p className="text-sm font-semibold text-foreground leading-tight">
-                        {lastTopic ? lastTopic.slice(0, 12) : "—"}
+                      <p className="text-sm font-semibold text-foreground leading-tight truncate">
+                        {lastTopic ?? "—"}
                       </p>
                     </div>
                   </div>

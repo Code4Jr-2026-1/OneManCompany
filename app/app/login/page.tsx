@@ -85,27 +85,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Demo accounts */}
-          <div className="mt-6 pt-6 border-t border-white/10">
-            <p className="text-xs text-slate-500 text-center mb-3">Quick access — demo accounts</p>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { role: "Coach", email: "coach@chess.com", pass: "coach123", icon: "🎓" },
-                { role: "Student", email: "arjun@chess.com", pass: "student123", icon: "♟" },
-                { role: "Parent", email: "parent@chess.com", pass: "parent123", icon: "👨‍👧" },
-              ].map(({ role, email, pass, icon }) => (
-                <button key={role} onClick={() => {
-                  const f = document.querySelector("form")!
-                  ;(f.querySelector('[name=email]') as HTMLInputElement).value = email
-                  ;(f.querySelector('[name=password]') as HTMLInputElement).value = pass
-                }}
-                  className="bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500/30 rounded-xl p-3 text-slate-400 hover:text-white transition-all cursor-pointer text-center group">
-                  <div className="text-lg mb-1">{icon}</div>
-                  <div className="text-xs font-medium">{role}</div>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         <p className="text-center text-slate-600 text-xs mt-6">

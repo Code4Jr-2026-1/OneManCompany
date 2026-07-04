@@ -75,10 +75,9 @@ export function AttendanceForm({
               {attendingStudents.filter(s => s.phone).map(s => {
                 const count = result?.sessionCounts[s.id] ?? 1
                 const msg = [
-                  `Hi! Class ${count} done today for ${s.name} ♟`,
-                  effectiveTopic ? `Topic: ${effectiveTopic}` : "",
-                  "Keep up the great work!",
-                ].filter(Boolean).join("\n")
+                  `Hi! Class ${count}/20 done this month for ${s.name}.`,
+                  effectiveTopic ? `Topic: ${effectiveTopic}.` : "",
+                ].filter(Boolean).join(" ")
                 return (
                   <a
                     key={s.id}

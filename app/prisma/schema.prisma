@@ -81,7 +81,9 @@ model Student {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  weakness   String?
+  weakness     String?
+  billingType  String  @default("hourly")
+  monthlyFee   Float?
 
   coachId String
   coach   User   @relation("CoachStudents", fields: [coachId], references: [id])
