@@ -96,14 +96,14 @@ export default async function CoachHome() {
     const d = new Date(date); d.setHours(h, m, 0, 0); return d
   }
   type UpcomingItem =
-    | { kind: "private"; date: Date; studentId: string; studentName: string; skillLevel: string; duration: number }
-    | { kind: "group"; date: Date; id: string; name: string; duration: number; enrolledCount: number; startTime: string }
+    | { kind: "private"; date: Date; studentId: string; studentName: string; skillLevel: string; duration: number; meetingLink: string | null }
+    | { kind: "group"; date: Date; id: string; name: string; duration: number; enrolledCount: number; startTime: string; meetingLink: string | null }
 
   const upcomingItems: UpcomingItem[] = []
   for (const s of students) {
     for (const ss of s.scheduledSessions) {
       const d = new Date(ss.scheduledAt)
-      if (d >= todayEnd) upcomingItems.push({ kind: "private", date: d, studentId: s.id, studentName: s.name, skillLevel: s.skillLevel, duration: ss.duration })
+      if (d >= todayEnd) upcomingItems.push({ kind: "private", date: d, studentId: s.id, studentName: s.name, skillLevel: s.skillLevel, duration: ss.duration, meetingLink: ss.meetingLink ?? null })
     }
   }
   for (let offset = 1; offset <= 6; offset++) {
@@ -111,7 +111,7 @@ export default async function CoachHome() {
     const dow = day.getDay()
     for (const gc of groupClasses) {
       if (gc.dayOfWeek === dow) {
-        upcomingItems.push({ kind: "group", date: atTime(day, gc.startTime), id: gc.id, name: gc.name, duration: gc.duration, enrolledCount: gc.enrollments.length, startTime: gc.startTime })
+        upcomingItems.push({ kind: "group", date: atTime(day, gc.startTime), id: gc.id, name: gc.name, duration: gc.duration, enrolledCount: gc.enrollments.length, startTime: gc.startTime, meetingLink: gc.meetingLink ?? null })
       }
     }
   }
@@ -183,11 +183,19 @@ export default async function CoachHome() {
                   </div>
                   <p className="text-sm text-muted-foreground">{fmtTime(new Date(ss.scheduledAt))} · {ss.duration} min · {ss.skillLevel}</p>
                 </div>
-                <Link href={`/coach/attendance/${ss.id}?type=private&studentId=${ss.studentId}`}>
-                  <button className="bg-green-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-green-700 shrink-0">
-                    Mark Done ✓
-                  </button>
-                </Link>
+                <div className="flex items-center gap-2 shrink-0">
+                  {ss.meetingLink && (
+                    <a href={ss.meetingLink} target="_blank" rel="noopener noreferrer"
+                      className="bg-blue-600 text-white text-sm px-3 py-2 rounded-lg hover:bg-blue-700">
+                      Join ↗
+                    </a>
+                  )}
+                  <Link href={`/coach/attendance/${ss.id}?type=private&studentId=${ss.studentId}`}>
+                    <button className="bg-green-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-green-700">
+                      Mark Done ✓
+                    </button>
+                  </Link>
+                </div>
               </div>
             ))}
 
@@ -202,11 +210,19 @@ export default async function CoachHome() {
                   </div>
                   <p className="text-sm text-muted-foreground">{gc.startTime} · {gc.duration} min · {gc.enrollments.length} students</p>
                 </div>
-                <Link href={`/coach/attendance/${gc.id}?type=group`}>
-                  <button className="bg-teal-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-teal-700 shrink-0">
-                    Mark Done ✓
-                  </button>
-                </Link>
+                <div className="flex items-center gap-2 shrink-0">
+                  {gc.meetingLink && (
+                    <a href={gc.meetingLink} target="_blank" rel="noopener noreferrer"
+                      className="bg-blue-600 text-white text-sm px-3 py-2 rounded-lg hover:bg-blue-700">
+                      Join ↗
+                    </a>
+                  )}
+                  <Link href={`/coach/attendance/${gc.id}?type=group`}>
+                    <button className="bg-teal-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-teal-700">
+                      Mark Done ✓
+                    </button>
+                  </Link>
+                </div>
               </div>
             ))}
           </div>
@@ -245,9 +261,15 @@ export default async function CoachHome() {
                           </div>
                           <p className="text-sm text-muted-foreground">{item.duration} min · {item.enrolledCount} students</p>
                         </div>
-                        <Link href={`/coach/group-classes/${item.id}`}>
-                          <button className="text-sm bg-teal-600 text-white px-3 py-1.5 rounded-lg hover:bg-teal-700">View →</button>
-                        </Link>
+                        <div className="flex gap-2 shrink-0">
+                          {item.meetingLink && (
+                            <a href={item.meetingLink} target="_blank" rel="noopener noreferrer"
+                              className="text-xs bg-blue-600 text-white px-2.5 py-1.5 rounded-lg hover:bg-blue-700">Join ↗</a>
+                          )}
+                          <Link href={`/coach/group-classes/${item.id}`}>
+                            <button className="text-xs bg-teal-600 text-white px-2.5 py-1.5 rounded-lg hover:bg-teal-700">View →</button>
+                          </Link>
+                        </div>
                       </div>
                     )
                   }
@@ -267,9 +289,15 @@ export default async function CoachHome() {
                         </div>
                         <p className="text-sm text-muted-foreground">{item.duration} min · {item.skillLevel}</p>
                       </div>
-                      <Link href={`/coach/students/${item.studentId}`}>
-                        <button className="text-xs text-primary hover:underline">Profile →</button>
-                      </Link>
+                      <div className="flex gap-2 shrink-0">
+                        {item.meetingLink && (
+                          <a href={item.meetingLink} target="_blank" rel="noopener noreferrer"
+                            className="text-xs bg-blue-600 text-white px-2.5 py-1.5 rounded-lg hover:bg-blue-700">Join ↗</a>
+                        )}
+                        <Link href={`/coach/students/${item.studentId}`}>
+                          <button className="text-xs border px-2.5 py-1.5 rounded-lg hover:bg-accent text-foreground">Profile →</button>
+                        </Link>
+                      </div>
                     </div>
                   )
                 })}

@@ -199,6 +199,10 @@ function GroupPopover({ event, day, onClose }: { event: GroupEvent; day: Date; o
       <p className="font-semibold text-foreground mb-1">{event.name}</p>
       <p className="text-muted-foreground mb-2">{event.enrolledCount}/{event.capacity} students · {event.duration} min</p>
       <div className="flex flex-col gap-2">
+        {event.meetingLink && (
+          <a href={event.meetingLink} target="_blank" rel="noopener noreferrer" onClick={onClose}
+            className="text-center bg-blue-600 text-white py-1 rounded-lg hover:bg-blue-700">Join Meeting ↗</a>
+        )}
         <Link href={`/coach/group-classes/${event.id}`} onClick={onClose}
           className="text-center bg-teal-600 text-white py-1 rounded-lg hover:bg-teal-700">View Roster</Link>
         <a href={waLink(null, message)} target="_blank" rel="noopener noreferrer" onClick={onClose}

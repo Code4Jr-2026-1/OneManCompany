@@ -96,8 +96,14 @@ export default async function PersonalClassesPage() {
                         <p className="text-xs text-muted-foreground capitalize">{ss.student.skillLevel} · {ss.duration} min</p>
                       </div>
                       <div className="flex gap-2 flex-shrink-0">
+                        {ss.meetingLink && (
+                          <a href={ss.meetingLink} target="_blank" rel="noopener noreferrer"
+                            className="text-xs bg-blue-600 text-white px-2.5 py-1.5 rounded-lg hover:bg-blue-700">
+                            Join ↗
+                          </a>
+                        )}
                         <Link href={`/coach/students/${ss.student.id}`}>
-                          <button className="text-xs bg-blue-600 text-white px-2.5 py-1.5 rounded-lg hover:bg-blue-700">Profile</button>
+                          <button className="text-xs border px-2.5 py-1.5 rounded-lg hover:bg-accent text-foreground">Profile</button>
                         </Link>
                         <LogSessionButton
                           sessionId={ss.id}
