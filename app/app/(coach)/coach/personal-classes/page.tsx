@@ -30,6 +30,8 @@ export default async function PersonalClassesPage() {
     },
     orderBy: { name: "asc" },
   })
+  const defaultLink = (coach as { defaultMeetingLink?: string | null }).defaultMeetingLink ?? null
+
   const students = studentRows.map(s => ({
     id: s.id,
     name: s.name,
@@ -96,8 +98,8 @@ export default async function PersonalClassesPage() {
                         <p className="text-xs text-muted-foreground capitalize">{ss.student.skillLevel} · {ss.duration} min</p>
                       </div>
                       <div className="flex gap-2 flex-shrink-0">
-                        {ss.meetingLink && (
-                          <a href={ss.meetingLink} target="_blank" rel="noopener noreferrer"
+                        {(ss.meetingLink ?? defaultLink) && (
+                          <a href={(ss.meetingLink ?? defaultLink)!} target="_blank" rel="noopener noreferrer"
                             className="text-xs bg-blue-600 text-white px-2.5 py-1.5 rounded-lg hover:bg-blue-700">
                             Join ↗
                           </a>

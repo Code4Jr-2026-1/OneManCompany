@@ -18,6 +18,7 @@ export default async function CoachHome() {
   const weekEnd    = new Date(now.getTime() + 7 * 86400000)
   const { monthStart, nextMonth } = monthBounds(now)
   const hourlyRate = coach.hourlyRate ?? 500
+  const defaultLink = (coach as { defaultMeetingLink?: string | null }).defaultMeetingLink ?? null
 
   const students = await prisma.student.findMany({
     where: { coachId: coach.id },
@@ -43,7 +44,7 @@ export default async function CoachHome() {
   const todayPrivate = students.flatMap(s =>
     s.scheduledSessions
       .filter(ss => new Date(ss.scheduledAt) >= todayStart && new Date(ss.scheduledAt) < todayEnd)
-      .map(ss => ({ ...ss, studentId: s.id, studentName: s.name, skillLevel: s.skillLevel }))
+      .map(ss => ({ ...ss, studentId: s.id, studentName: s.name, skillLevel: s.skillLevel, meetingLink: ss.meetingLink ?? defaultLink }))
   ).sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
 
   // Today's group classes
@@ -103,7 +104,7 @@ export default async function CoachHome() {
   for (const s of students) {
     for (const ss of s.scheduledSessions) {
       const d = new Date(ss.scheduledAt)
-      if (d >= todayEnd) upcomingItems.push({ kind: "private", date: d, studentId: s.id, studentName: s.name, skillLevel: s.skillLevel, duration: ss.duration, meetingLink: ss.meetingLink ?? null })
+      if (d >= todayEnd) upcomingItems.push({ kind: "private", date: d, studentId: s.id, studentName: s.name, skillLevel: s.skillLevel, duration: ss.duration, meetingLink: ss.meetingLink ?? defaultLink })
     }
   }
   for (let offset = 1; offset <= 6; offset++) {
@@ -111,7 +112,7 @@ export default async function CoachHome() {
     const dow = day.getDay()
     for (const gc of groupClasses) {
       if (gc.dayOfWeek === dow) {
-        upcomingItems.push({ kind: "group", date: atTime(day, gc.startTime), id: gc.id, name: gc.name, duration: gc.duration, enrolledCount: gc.enrollments.length, startTime: gc.startTime, meetingLink: gc.meetingLink ?? null })
+        upcomingItems.push({ kind: "group", date: atTime(day, gc.startTime), id: gc.id, name: gc.name, duration: gc.duration, enrolledCount: gc.enrollments.length, startTime: gc.startTime, meetingLink: gc.meetingLink ?? defaultLink })
       }
     }
   }
@@ -211,8 +212,8 @@ export default async function CoachHome() {
                   <p className="text-sm text-muted-foreground">{gc.startTime} · {gc.duration} min · {gc.enrollments.length} students</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  {gc.meetingLink && (
-                    <a href={gc.meetingLink} target="_blank" rel="noopener noreferrer"
+                  {(gc.meetingLink ?? defaultLink) && (
+                    <a href={(gc.meetingLink ?? defaultLink)!} target="_blank" rel="noopener noreferrer"
                       className="bg-blue-600 text-white text-sm px-3 py-2 rounded-lg hover:bg-blue-700">
                       Join ↗
                     </a>

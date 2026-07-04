@@ -35,6 +35,8 @@ export default async function SchedulePage() {
     },
   })
 
+  const defaultLink = (coach as { defaultMeetingLink?: string | null }).defaultMeetingLink ?? null
+
   const privateEvents = students.flatMap(s =>
     s.scheduledSessions.map(ss => ({
       id: ss.id,
@@ -45,7 +47,7 @@ export default async function SchedulePage() {
       scheduledAt: ss.scheduledAt.toISOString(),
       duration: ss.duration,
       status: ss.status,
-      meetingLink: ss.meetingLink,
+      meetingLink: ss.meetingLink ?? defaultLink,
       type: "private" as const,
     }))
   )
@@ -58,7 +60,7 @@ export default async function SchedulePage() {
     duration: gc.duration,
     enrolledCount: gc.enrollments.length,
     capacity: gc.capacity,
-    meetingLink: gc.meetingLink,
+    meetingLink: gc.meetingLink ?? defaultLink,
     whatsappGroupLink: gc.whatsappGroupLink,
     enrolledEmails: Array.from(new Set(
       gc.enrollments.flatMap(e => [e.student.user?.email, e.student.parent?.email].filter((em): em is string => !!em))
