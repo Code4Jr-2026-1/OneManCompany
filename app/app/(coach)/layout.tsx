@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { SidebarNav } from "@/components/sidebar-nav"
+import { BottomTabNav } from "@/components/bottom-tab-nav"
 
 export default async function CoachLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
@@ -12,9 +13,10 @@ export default async function CoachLayout({ children }: { children: React.ReactN
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <SidebarNav coachName={coach?.name ?? "Coach"} />
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">
         {children}
       </main>
+      <BottomTabNav />
     </div>
   )
 }

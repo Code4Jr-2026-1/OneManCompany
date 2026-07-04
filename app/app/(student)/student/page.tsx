@@ -34,6 +34,7 @@ export default async function StudentPortal() {
     groupClasses: student.groupEnrollments.map(e => e.groupClass),
   }).slice(0, 5) : []
   const nextSession = upcoming[0]
+  const pendingHwCount = student?.homeworkAssignments.length ?? 0
 
   const fmtDay = (d: Date) => new Date(d).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })
   const fmtTime = (d: Date) => new Date(d).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
@@ -44,10 +45,50 @@ export default async function StudentPortal() {
 
       <div className="max-w-5xl mx-auto px-6 py-8">
         <h1 className="text-2xl font-bold text-foreground mb-1">Welcome, {user?.name?.split(" ")[0]} ♟</h1>
-        <p className="text-muted-foreground mb-8 text-sm">
+        <p className="text-muted-foreground mb-6 text-sm capitalize">
           {student ? `${student.skillLevel} · Rating ${student.rating}` : "No student profile yet."}
-          {nextSession ? ` · Next session ${fmtDay(nextSession.date)}` : ""}
         </p>
+
+        {/* ── HERO: Next Session ── */}
+        {nextSession ? (
+          <div className="bg-card border border-border rounded-xl shadow-sm p-5 mb-4">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Next Class</p>
+            <div className="flex items-center gap-4">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 ${nextSession.kind === "group" ? "bg-teal-100" : "bg-blue-100"}`}>
+                {nextSession.kind === "group" ? "👥" : "♟"}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-lg font-bold text-foreground">
+                  {nextSession.date.toDateString() === new Date().toDateString() ? "Today" : fmtDay(nextSession.date)}
+                  <span className="text-muted-foreground font-normal text-base ml-2">{fmtTime(nextSession.date)}</span>
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {nextSession.kind === "group" ? nextSession.name : "Private Lesson"} · {nextSession.duration} min
+                </p>
+              </div>
+              {nextSession.meetingLink && (
+                <a href={nextSession.meetingLink} target="_blank" rel="noopener noreferrer"
+                  className="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 shrink-0">
+                  Join →
+                </a>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="bg-card border border-border rounded-xl shadow-sm p-5 mb-4 text-center text-muted-foreground text-sm">
+            No upcoming sessions scheduled.
+          </div>
+        )}
+
+        {/* Homework badge */}
+        {pendingHwCount > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-6 flex items-center gap-3">
+            <span className="text-lg">📝</span>
+            <p className="text-sm font-medium text-amber-800">
+              {pendingHwCount} task{pendingHwCount !== 1 ? "s" : ""} due — check your homework below
+            </p>
+          </div>
+        )}
 
         {/* Quick actions */}
         <div className="grid grid-cols-3 gap-4 mb-8">
@@ -57,49 +98,50 @@ export default async function StudentPortal() {
             { href: "/student/progress", icon: "📈", title: "My Progress", desc: "Rating & topic mastery", bg: "from-green-600 to-green-700" },
           ].map(a => (
             <Link key={a.href} href={a.href}>
-              <div className={`bg-gradient-to-br ${a.bg} rounded-xl p-5 hover:opacity-90 transition-all cursor-pointer`}>
+              <div className={`bg-gradient-to-br ${a.bg} rounded-xl p-5 hover:opacity-90 transition-all cursor-pointer text-white`}>
                 <div className="text-2xl mb-2">{a.icon}</div>
-                <h3 className="font-semibold">{a.title}</h3>
-                <p className="text-sm opacity-75 mt-1">{a.desc}</p>
+                <h3 className="font-semibold text-sm">{a.title}</h3>
+                <p className="text-xs opacity-75 mt-1">{a.desc}</p>
               </div>
             </Link>
           ))}
         </div>
 
-        {/* Upcoming sessions */}
-        {upcoming.length > 0 && (
-          <div className="bg-card border border-border shadow-sm rounded-xl p-5 mb-4">
-            <h3 className="font-semibold text-foreground mb-4">📅 Upcoming Sessions</h3>
-            <div className="space-y-3">
-              {upcoming.map((item, i) => {
-                const isToday = item.date.toDateString() === new Date().toDateString()
-                return (
-                  <div key={i} className="flex items-center gap-4">
-                    <div className="w-24 text-xs text-muted-foreground flex-shrink-0">
-                      <div>{isToday ? "Today" : fmtDay(item.date)}</div>
-                      <div className="font-medium text-foreground">{fmtTime(item.date)}</div>
-                    </div>
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm flex-shrink-0 ${item.kind === "group" ? "bg-teal-100 text-teal-700" : "bg-blue-100 text-blue-700"}`}>
-                      {item.kind === "group" ? "👥" : "♟"}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-foreground">{item.kind === "group" ? item.name : "Private Lesson"}</p>
-                      <p className="text-xs text-muted-foreground">{item.duration} min</p>
-                    </div>
-                    {item.meetingLink && (
-                      <a href={item.meetingLink} target="_blank" rel="noopener noreferrer"
-                        className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 flex-shrink-0">
-                        Join →
-                      </a>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
+        {/* ── DETAIL CARDS (below the fold) ── */}
         <div className="grid grid-cols-2 gap-4">
+          {/* Full upcoming sessions */}
+          {upcoming.length > 1 && (
+            <div className="col-span-2 bg-card border border-border shadow-sm rounded-xl p-5">
+              <h3 className="font-semibold text-foreground mb-4">📅 All Upcoming Sessions</h3>
+              <div className="space-y-3">
+                {upcoming.map((item, i) => {
+                  const isToday = item.date.toDateString() === new Date().toDateString()
+                  return (
+                    <div key={i} className="flex items-center gap-4">
+                      <div className="w-24 text-xs text-muted-foreground flex-shrink-0">
+                        <div>{isToday ? "Today" : fmtDay(item.date)}</div>
+                        <div className="font-medium text-foreground">{fmtTime(item.date)}</div>
+                      </div>
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm flex-shrink-0 ${item.kind === "group" ? "bg-teal-100 text-teal-700" : "bg-blue-100 text-blue-700"}`}>
+                        {item.kind === "group" ? "👥" : "♟"}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">{item.kind === "group" ? item.name : "Private Lesson"}</p>
+                        <p className="text-xs text-muted-foreground">{item.duration} min</p>
+                      </div>
+                      {item.meetingLink && (
+                        <a href={item.meetingLink} target="_blank" rel="noopener noreferrer"
+                          className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 flex-shrink-0">
+                          Join →
+                        </a>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Homework */}
           {student && student.homeworkAssignments.length > 0 && (
             <div className="bg-card border border-border shadow-sm rounded-xl p-5">

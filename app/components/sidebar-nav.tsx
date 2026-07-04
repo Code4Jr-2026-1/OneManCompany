@@ -18,7 +18,7 @@ export function SidebarNav({ coachName }: { coachName?: string }) {
   const path = usePathname()
 
   return (
-    <aside className="w-52 bg-white border-r border-gray-100 flex flex-col h-screen sticky top-0 shrink-0">
+    <aside className="hidden lg:flex w-52 bg-white border-r border-gray-100 flex-col h-screen sticky top-0 shrink-0">
       {/* Logo */}
       <div className="px-5 py-5 border-b border-gray-100">
         <div className="flex items-center gap-3">
